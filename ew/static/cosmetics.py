@@ -1260,7 +1260,7 @@ cosmetic_items_list = [
     EwCosmeticItem(
         id_cosmetic = "dionaeashawl",
         str_name = "Dionaea Shawl",
-        str_desc = "A fabric shawl, made from the dried corpse of Dionaea. Despite being fashioned from a corpse, it feels SO unbelievebly comfortable!",
+        str_desc = "A fabric shawl, made from the dried corpse of Dionaea. Despite being fashioned from a corpse, it feels SO unbelievably comfortable!",
         str_onadorn = "You wrap the Dionaea Shawl around your torso and start blushing. OMGz, it's, like so ganker-core!!! There's even a little head that sits on your shoulder!",
         str_unadorn = "You take off the Dionaea Shawl. Your vibe is thoroughly less Ganker-core than it was minutes ago.",
         str_onbreak = "Without warning, the Dionaea Shawl falls from your shoulders.",
@@ -2210,6 +2210,16 @@ cosmetic_items_list = [
         freshness = -1,
         acquisition = "smelting",
         price = 100,
+    ),
+    EwCosmeticItem(
+        id_cosmetic = "poncho",
+        str_name = "Poncho",
+        str_desc = "A hooded fabric poncho, finely woven and beautifully patterned. Wearing this makes you want to go far out west.",
+        rarity = "Plebeian",
+        durability = 250000,
+        style = "tough",
+        freshness = 6,
+        price = 50000,
     ),
 ]
 

@@ -5,7 +5,7 @@ from ew.backend import core as bknd_core, item as bknd_item
 from ew.backend.item import EwItem
 from ew.backend.mutation import EwMutation
 from ew.backend.player import EwPlayer
-from ew.backend.worldevent import get_void_connection_pois
+from ew.backend import worldevent as bknd_worldevent  
 from ew.static import cfg as ewcfg
 from ew.static import poi as poi_static
 from ew.utils import core as ewutils
@@ -227,6 +227,22 @@ def get_enemies_look_resp(user_data, district_data):
     return enemies_resp
 
 
+def get_world_events_look_resp(user_data, district_data):
+    # Lists any world events in district
+    world_events = bknd_worldevent.get_world_events(id_server=user_data.id_server, active_only=True)
+    worldevents_resp = ""
+
+    for id_event in world_events:
+        # If a world event should have a response
+        if world_events.get(id_event) in ewcfg.poi_events:
+            event_data = bknd_worldevent.EwWorldEvent(id_event=id_event)
+            # If it's in the !look district
+            if district_data.name == event_data.event_props.get('poi'):
+                event_def = poi_static.event_type_to_def.get(event_data.event_type)
+
+                worldevents_resp += "\n\n" + event_def.str_event_ongoing
+    
+    return worldevents_resp
 
 
 # SWILLDERMUK - Unused
@@ -263,7 +279,7 @@ def get_random_prank_item(user_data, district_data):
 
 def get_void_connections_resp(poi, id_server):
     response = ""
-    void_connections = get_void_connection_pois(id_server)
+    void_connections = bknd_worldevent.get_void_connection_pois(id_server)
     if poi == ewcfg.poi_id_thevoid:
         connected_poi_names = [poi_static.id_to_poi.get(poi_id).str_name for poi_id in void_connections]
         response = "\n\nThe street sign in the intersection points to {}, and {}".format(", ".join(connected_poi_names), poi_static.id_to_poi.get(ewcfg.poi_id_thesewers).str_name)
@@ -309,7 +325,7 @@ async def one_eye_dm(id_user = None, id_server = None, poi = None):
 
 async def send_arrival_response(cmd, poi, channel):
     response = "You {} {}.".format(poi.str_enter, poi.str_name)
-    if poi.id_poi in get_void_connection_pois(cmd.guild.id):
+    if poi.id_poi in bknd_worldevent.get_void_connection_pois(cmd.guild.id):
         response += "\nYou notice an underground passage that wasn't there last time you came here."
 
     return await fe_utils.send_message(cmd.client,

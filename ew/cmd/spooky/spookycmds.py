@@ -600,7 +600,6 @@ async def sacrifice(cmd):
                 item.id_owner = '{}sacrificed'.format(user_data.id_user)
                 item.persist()
                 property_type = ewcfg.id_item_convert.get(item.item_type)
-                print('')
                 if item.item_props.get('context') == 'slimeoidheart':
                     property_type = 'slimeoidheart'
                 elif property_type is None:

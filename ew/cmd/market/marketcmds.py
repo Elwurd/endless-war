@@ -303,10 +303,7 @@ async def donate(cmd):
                 market_data.donated_slimes += user_data.slimes
                 market_data.persist()
                 user_data.trauma = ewcfg.trauma_id_environment
-                die_resp = user_data.die(cause = ewcfg.cause_donation)
-                user_data.persist()
-                # Assign the corpse role to the player. He dead.
-                await ewrolemgr.updateRoles(client = cmd.client, member = cmd.message.author)
+                die_resp = await user_data.die(cause = ewcfg.cause_donation)
                 await die_resp.post()
             else:
                 # Do the transfer if the player can afford it.
@@ -623,12 +620,9 @@ async def xfer(cmd):
         user_data.visiting = ewcfg.location_id_empty
         user_data.trauma = ewcfg.trauma_id_environment
 
-        user_data.die(cause = ewcfg.cause_suicide)
-        user_data.persist()
+        await user_data.die(cause = ewcfg.cause_suicide)
 
-        await fe_utils.send_message(cmd.client, cmd.message.channel, fe_utils.formatMessage(cmd.message.author, "Gaming the slimeconomy is punishable by death. SlimeCorp soldiers execute you immediately."))
-        await ewrolemgr.updateRoles(client = cmd.client, member = cmd.message.author)
-        return
+        return await fe_utils.send_response("Gaming the slimeconomy is punishable by death. FREE MARKET (TM) soldiers execute you immediately.", cmd)
 
     # Parse the slime value to send.
     value = None
@@ -1406,5 +1400,5 @@ async def cancel_trade(cmd):
 async def bazaar_refresh(cmd):
     if not cmd.message.author.guild_permissions.administrator:
         return
-    print('GOO')
+    ewutils.logMsg(f"{cmd.message.author.display_name} force refreshed the bazaar.")
     await market_utils.refresh_bazaar(id_server=cmd.guild.id)

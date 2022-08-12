@@ -78,8 +78,10 @@ def spawn_enemy(
 
         while enemies_count >= ewcfg.max_enemies and try_count < 5:
 
+            if pre_chosen_poi != None:
+                potential_chosen_poi = pre_chosen_poi
             # Sand bags only spawn in the dojo
-            if enemytype == ewcfg.enemy_type_sandbag:
+            elif enemytype == ewcfg.enemy_type_sandbag:
                 potential_chosen_poi = ewcfg.poi_id_dojo
             # Slimeoid Trainers only spawn in the Arena
             elif enemytype == ewcfg.enemy_type_slimeoidtrainer:

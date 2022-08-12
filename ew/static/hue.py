@@ -315,8 +315,9 @@ hue_list = [
     EwHue(
         id_hue=ewcfg.hue_id_negative,
         alias=[
-            "negaslimeoid"
-            "negativedye"
+            "negaslimeoid",
+            "negativedye",
+            "||negativedye||",
         ],
         str_saturate="It turns a seemingly negative hue!",
         str_name="negative",

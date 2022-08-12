@@ -64,7 +64,7 @@ def inaccessible(user_data = None, poi = None):
     elevatorstop = EwGamestate(id_server=user_data.id_server, id_state='elevator')
     for lock in ewcfg.lock_states:
         if poi in ewcfg.lock_states.get(lock) and user_data.poi in ewcfg.lock_states.get(lock):
-            print(lock)
+            # print(lock)
             gamestate = EwGamestate(id_server=user_data.id_server, id_state=lock)
             if gamestate.bit == 0 or elevatorstop.value not in ewcfg.lock_states.get(lock):
                 return True

@@ -60,7 +60,6 @@ async def summonenemy(cmd):
                 pre_chosen_level=enemy_level,
                 pre_chosen_slimes=enemy_slimes,
                 pre_chosen_initialslimes=enemy_slimes,
-                pre_chosen_coord=enemy_coord,
                 pre_chosen_displayname=enemy_displayname,
                 pre_chosen_weather=ewcfg.enemy_weathertype_normal,
                 manual_spawn=True,

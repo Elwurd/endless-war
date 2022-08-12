@@ -69,7 +69,7 @@ async def chemo(cmd):
                         accepted = False
 
             except Exception as e:
-                print(e)
+                ewutils.logMsg(f"Failed to process chemo check for {cmd.message.author.display_name}:{e}")
                 accepted = False
 
             if not accepted:
@@ -457,10 +457,11 @@ async def fursuit(cmd):
     # gets days until full moon
     if ewcfg.mutation_id_organicfursuit in mutations:
         days_until = -market_data.day % 29
+        print(days_until)
         if days_until > 15:
-            days_until -= 14
-        elif days_until < 13:
-            days_until += 15
+            days_until -= 16
+        elif days_until <= 14:
+            days_until += 13
         else:
             days_until = 0
 
@@ -571,7 +572,7 @@ async def devour(cmd):
             if item_obj.item_type != ewcfg.it_food:
                 mutation_data.data = '{}'.format(time_now)
             if is_brick == 0:
-                response = user_data.eat(item_obj)
+                response = await user_data.eat(item_obj)
             user_data.persist()
     elif item_search == "":
         response = "Devour what?"
@@ -726,17 +727,19 @@ async def slap(cmd):
             mutation_data.persist()
 
             if target_data.poi == ewcfg.poi_id_thesewers:
-                target_data.die(cause=ewcfg.cause_suicide)
+                await target_data.die(cause=ewcfg.cause_suicide)
                 target_response += " But you hit your head really hard! Your precious little dome explodes into bits and pieces and you die!"
+                target_died = True
 
             user_data.persist()
 
-            await ewrolemgr.updateRoles(client=ewutils.get_client(), member=cmd.mentions[0], new_poi=target_data.poi)
-            target_data.persist()
+            if not target_died:
+                await ewrolemgr.updateRoles(client=ewutils.get_client(), member=cmd.mentions[0], new_poi=target_data.poi)
+                target_data.persist()
 
-            await user_data.move_inhabitants(id_poi=dest_poi_obj.id_poi)
+                await user_data.move_inhabitants(id_poi=dest_poi_obj.id_poi)
 
-            await prank_utils.activate_trap_items(dest_poi_obj.id_poi, user_data.id_server, target_data.id_user)
+                await prank_utils.activate_trap_items(dest_poi_obj.id_poi, user_data.id_server, target_data.id_user)
 
             await fe_utils.send_message(cmd.client, cmd.mentions[0], fe_utils.formatMessage(cmd.mentions[0], dm_response))
             await fe_utils.send_message(cmd.client, fe_utils.get_channel(server=cmd.mentions[0].guild, channel_name=dest_poi_obj.channel), fe_utils.formatMessage(cmd.mentions[0], target_response))

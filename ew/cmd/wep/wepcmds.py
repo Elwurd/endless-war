@@ -462,9 +462,9 @@ async def attack(cmd):
         if target_killed:
             # This MUST be run before weapon explosions, in case the weapon explosion triggers a spontaneous combustion
             # That case could kill the target, and running this afterward would kill the target twice, dropping items x2
-            die_resp = target.die(cause=ewcfg.cause_killing)
+            die_resp = await target.die(cause=ewcfg.cause_killing)
         if ctn.explode:
-            wep_explode = weapon_explosion(user_data=EwUser(member=attacker_member), shootee_data=EwUser(member=target_member),
+            wep_explode = await weapon_explosion(user_data=EwUser(member=attacker_member), shootee_data=EwUser(member=target_member),
                                            district_data=EwDistrict(id_server=cmd.guild.id, district=attacker.poi),
                                            market_data=EwMarket(id_server=cmd.guild.id),
                                            life_states=[ewcfg.life_state_enlisted, ewcfg.life_state_juvenile, ewcfg.life_state_executive],
@@ -509,13 +509,11 @@ async def attack(cmd):
         if bounty > 0: response += "\n\n SlimeCorp transfers {:,} SlimeCoin to {}\'s account.".format(bounty, attacker_member.display_name)
 
         # Kill and persist
-        bust_ctn = target.die(cause=ewcfg.cause_busted) # This persists the target, no need to do it again
-        attacker.persist()
+        bust_ctn = await target.die(cause=ewcfg.cause_busted) # This persists the target, no need to do it again
 
         # Build final response
         resp_ctn.add_response_container(bust_ctn)
         resp_ctn.add_channel_response(cmd.message.channel, response)
-        resp_ctn.add_member_to_update(target_member)
 
     elif check_resp == ewcfg.enemy_targeted_string:
         """
@@ -712,12 +710,8 @@ async def suicide(cmd):
             user_data.id_killer = cmd.message.author.id
             user_data.trauma = ewcfg.trauma_id_suicide
             user_data.visiting = ewcfg.location_id_empty
-            die_resp = user_data.die(cause=ewcfg.cause_suicide)
+            die_resp = await user_data.die(cause=ewcfg.cause_suicide)
             resp_cont.add_response_container(die_resp)
-            user_data.persist()
-
-            # Assign the corpse role to the player. He dead.
-            await ewrolemgr.updateRoles(client=cmd.client, member=cmd.message.author)
 
             if user_data.has_soul == 1:
                 response = '{} has willingly returned to the slime. {}'.format(cmd.message.author.display_name, ewcfg.emote_slimeskull)

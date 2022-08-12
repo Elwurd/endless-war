@@ -29,73 +29,64 @@ except:
     from ..static.rstatic_dummy import relic_list
     from ..static.rstatic_dummy import dontfilter_relics
 
-"""
-    Drop some of a player's non-soulbound items into their district.
-"""
+
+def item_dropsome(id_server=None, id_user=None, item_type_filter=None, fraction=None, rigor=False) -> list:
+    """ Return a list of some of a user's non-exempt items to drop. """
+    try:
+        user_data = EwUser(id_server=id_server, id_user=id_user)
+        items = bknd_item.inventory(id_user=id_user, id_server=id_server, item_type_filter=item_type_filter)
+
+        drop_candidates = []
+        end_drops = []
+
+        # Filter out Soulbound items.
+        for item in items:
+            item_props = item.get('item_props')
+            if item_props.get('context') in ["corpse", "droppable"]:
+                bknd_item.give_item(id_user=user_data.poi, id_server=id_server, id_item=item.get('id_item'))
+            if not item.get('soulbound') and not (rigor and item_props.get('preserved') == user_data.id_user) and item_props.get('context') != 'gellphone':
+                drop_candidates.append(item)
+
+        filtered_items = []
+
+        if item_type_filter == ewcfg.it_item or item_type_filter == ewcfg.it_food:
+            filtered_items = drop_candidates
+        if item_type_filter == ewcfg.it_cosmetic:
+            for item in drop_candidates:
+                cosmetic_id = item.get('id_item')
+                cosmetic_item = EwItem(id_item=cosmetic_id)
+                if cosmetic_item.item_props.get('id_cosmetic') == "dogtag": # Dog Tags always drop on death
+                    end_drops.append(item.get('id_item'))
+                elif cosmetic_item.item_props.get('adorned') != "true" and cosmetic_item.item_props.get('slimeoid') != "true":
+                    filtered_items.append(item)
+
+        if item_type_filter == ewcfg.it_weapon:
+            for item in drop_candidates:
+                if item.get('id_item') != user_data.weapon and item.get('id_item') != user_data.sidearm:
+                    filtered_items.append(item)
+                else:
+                    pass
+
+        number_of_filtered_items = len(filtered_items)
+
+        number_of_items_to_drop = int(number_of_filtered_items / fraction)
+
+        if number_of_items_to_drop >= 2:
+            random.shuffle(filtered_items)
+            for drop in range(number_of_items_to_drop):
+                for item in filtered_items:
+                    id_item = item.get('id_item')
+                    end_drops.append(id_item)
+                    filtered_items.pop(0)
+                    break
+        return end_drops
+    except Exception as e:
+        ewutils.logMsg('Failed to drop some items for user with id {}: {}'.format(id_user, e))
+        return []
 
 
-def item_dropsome(id_server = None, id_user = None, item_type_filter = None, fraction = None, rigor = False):
-    # try:
-    user_data = EwUser(id_server=id_server, id_user=id_user)
-    items = bknd_item.inventory(id_user=id_user, id_server=id_server, item_type_filter=item_type_filter)
-    mutations = user_data.get_mutations()
-
-    drop_candidates = []
-    end_drops = []
-    # safe_items = [ewcfg.item_id_gameguide]
-
-    # Filter out Soulbound items.
-    for item in items:
-        item_props = item.get('item_props')
-        if item_props.get('context') in ["corpse", "droppable"]:
-            bknd_item.give_item(id_user=user_data.poi, id_server=id_server, id_item=item.get('id_item'))
-        if item.get('soulbound') == False and not (rigor == True and item_props.get('preserved') == user_data.id_user) and item_props.get('context') != 'gellphone':
-            drop_candidates.append(item)
-
-    filtered_items = []
-
-    if item_type_filter == ewcfg.it_item or item_type_filter == ewcfg.it_food:
-        filtered_items = drop_candidates
-    if item_type_filter == ewcfg.it_cosmetic:
-        for item in drop_candidates:
-            cosmetic_id = item.get('id_item')
-            cosmetic_item = EwItem(id_item=cosmetic_id)
-            if cosmetic_item.item_props.get('id_cosmetic') == "dogtag": # Dog Tags always drop on death
-                end_drops.append(item.get('id_item'))
-            elif cosmetic_item.item_props.get('adorned') != "true" and cosmetic_item.item_props.get('slimeoid') != "true":
-                filtered_items.append(item)
-
-    if item_type_filter == ewcfg.it_weapon:
-        for item in drop_candidates:
-            if item.get('id_item') != user_data.weapon and item.get('id_item') != user_data.sidearm:
-                filtered_items.append(item)
-            else:
-                pass
-
-    number_of_filtered_items = len(filtered_items)
-
-    number_of_items_to_drop = int(number_of_filtered_items / fraction)
-
-    if number_of_items_to_drop >= 2:
-        random.shuffle(filtered_items)
-        for drop in range(number_of_items_to_drop):
-            for item in filtered_items:
-                id_item = item.get('id_item')
-                #bknd_item.give_item(id_user=user_data.poi, id_server=id_server, id_item=id_item)
-                end_drops.append(id_item)
-                filtered_items.pop(0)
-                break
-    return end_drops
-    # except:
-    #	ewutils.logMsg('Failed to drop items for user with id {}'.format(id_user))
-
-def die_dropall( # returns a list of all item ids to drop
-        user_data,
-        item_type ,
-        kill_method = '',
-        rigor = False
-):
-    result = None
+def die_dropall(user_data, item_type, kill_method='') -> list:
+    """ Return a list of all of a user's non-exempt items to drop. """
     end_list = []
     if item_type != '':
         type_filter = 'and item_type = \'{}\''.format(item_type)
@@ -136,8 +127,9 @@ def die_dropall( # returns a list of all item ids to drop
                 result = item_cache.find_entries(criteria=search_criteria)
                 result = list(map(lambda dat: [dat.get('id_item')], result))
             else:
-                result =bknd_core.execute_sql_query( #this query excludes preserved items
-                    "select it.id_item from items it left join items_prop ip on it.id_item = ip.id_item and ip.name = 'preserved' and ip.value = %s WHERE id_user = %s AND id_server = %s and soulbound = 0 and ip.name IS NULL {}".format(type_filter), (
+                result = bknd_core.execute_sql_query(  # this query excludes preserved items
+                    "select it.id_item from items it left join items_prop ip on it.id_item = ip.id_item and ip.name = 'preserved' and ip.value = %s WHERE id_user = %s AND id_server = %s and soulbound = 0 and ip.name IS NULL {}".format(
+                        type_filter), (
                         user_data.id_user,
                         user_data.poi,
                         user_data.id_user,
@@ -146,11 +138,10 @@ def die_dropall( # returns a list of all item ids to drop
         if result is not None:
             for id in result:
                 end_list.append(id[0])
-    except:
-        ewutils.logMsg('Failed to drop items for user with id {}'.format(user_data.id_user))
-        traceback.print_exc(file=sys.stdout)
+    except Exception as e:
+        ewutils.logMsg('Failed to drop all items for user with id {}: {}'.format(user_data.id_user, e))
+        return []
     return end_list
-
 
 
 def get_cosmetic_abilities(id_user, id_server):
@@ -160,7 +151,6 @@ def get_cosmetic_abilities(id_user, id_server):
         id_user=id_user,
         id_server=id_server,
         item_type_filter=ewcfg.it_cosmetic
-
     )
 
     for item in cosmetic_items:
@@ -169,7 +159,6 @@ def get_cosmetic_abilities(id_user, id_server):
             active_abilities.append(i['ability'])
         else:
             pass
-
 
     return active_abilities
 
@@ -771,8 +760,8 @@ def item_drop(
             item_data.item_props["adorned"] = "false"
         item_data.persist()
         bknd_item.give_item(id_user=dest, id_server=item_data.id_server, id_item=item_data.id_item)
-    except:
-        ewutils.logMsg("Failed to drop item {}.".format(id_item))
+    except Exception as e:
+        ewutils.logMsg("Failed to drop item {}: {}".format(id_item, e))
 
 
 

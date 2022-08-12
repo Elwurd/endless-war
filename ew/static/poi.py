@@ -3038,10 +3038,10 @@ poi_list = [
         channel="saloon",
         permissions={'saloon': ['read', 'send', 'connect'], 'hang-em-square': ['read']},
         property_class="",
-        vendors = ['saloon'],
+        vendors=['saloon'],
         is_subzone=True,
         pvp=False,
-        neighbors={"hangemsquare": 20,  "dreadford":20}
+        neighbors={"hangemsquare": 20, "dreadford": 20}
     ),
     EwPoi(
         id_poi="hangemsquare",
@@ -3119,7 +3119,6 @@ for poi in poi_list:
         if poi.father_district != "" and poi.father_district != None:
             for father_poi in poi_list:
                 if father_poi.id_poi == poi.father_district:
-
                     poi.property_class = father_poi.property_class
 
                     if placeholder_channel_names_used:
@@ -3187,7 +3186,7 @@ for poi in poi_list:
     for alias in poi.alias:
         for poi_2 in poi_list:
             if alias in poi_2.alias and poi.id_poi != poi_2.id_poi:
-                print('alias {} is already being used by {}'.format(alias, poi_2.id_poi))
+                print('POI alias {} is already being used by {}'.format(alias, poi_2.id_poi))
 
         id_to_poi[alias] = poi
 
@@ -3236,15 +3235,6 @@ for poi in poi_list:
                         poi.str_desc += 'and {}.'.format(current_neighbor.str_name)
                     else:
                         poi.str_desc += '{}, '.format(current_neighbor.str_name)
-
-                neighbor_index += 1
-
-    if poi.is_street:
-        streets.append(poi.id_poi)
-
-
-    if poi.is_tutorial:
-        tutorial_pois.append(poi.id_poi)
 
     if poi.write_manuscript:
         for mother_poi in poi.mother_districts:
@@ -3672,7 +3662,139 @@ world_events = [
         event_type=ewcfg.event_type_spookyskeleton,
         str_event_start="A fucking **SKELETON** emerges from the rock you just hit! You should beat the shit out of it ):< !",
         str_event_end="The skeleton crumbles to dust, hopefully getting the beating of its life.",
-    )
+    ),
+    EwEventDef(
+        event_type=ewcfg.event_type_firestorm,
+        str_name="a firestorm",
+        pois=[ewcfg.poi_id_charcoalpark, ewcfg.poi_id_arsonbrook],
+        length=72, # 18h
+        buffer=8, # 2h
+        str_event_start="Fire and brimstone begins raining from the unholy air above. A **FIRESTORM** has begun!",
+        str_event_ongoing="There's a firestorm burning the sky.",
+        str_event_end="The firestorm fizzles out, returning to the usual humdrum of the searing sky.",
+        str_check_text="There's a firestorm burning in ",
+    ),
+    EwEventDef(
+        event_type=ewcfg.event_type_tornado,
+        str_name="a tornado",
+        pois=[], # All non-DT/GLD districts
+        length=48, # 12h
+        buffer=4, # 1h
+        str_event_start="Watch for the heavens! A **TORNADO** has formed!",
+        str_event_ongoing="There's a tornado ripping hell across the landscape.",
+        str_event_end="The tornado dissipates into the air, bringing peace back to the city streets.",
+        str_check_text="There's a tornado raging in ",
+    ),
+    EwEventDef(
+        event_type=ewcfg.event_type_radiation_storm,
+        str_name="a radiation storm",
+        pois=[ewcfg.poi_id_littlechernobyl],
+        length=72, # 18h
+        buffer=0,   
+        str_event_start="A massive cloud of radiation has enveloped the area. A **RADIATION STORM** has formed!",
+        str_event_ongoing="There's a radiation storm swirling the sundered streets.",
+        str_event_end="The radiation cloud subsides, spreading across the city. Back to the normal skin-searing levels!",
+        str_check_text="There's a radiation storm enveloping ",
+    ),
+	EwEventDef(
+		event_type=ewcfg.event_type_poudrin_hail,
+		str_name="poudrin hail",
+		pois=[ewcfg.poi_id_poudrinalley],
+		length=48, # 12h
+		buffer=8, # 2h
+		str_event_start="Poudrins begin falling from the heavens onto the city streets. **POUDRIN HAIL** has begun!",
+		str_event_ongoing="There's small chunks of crystallized slime falling across the pavement.",
+		str_event_end="The rain of poudrins abruptly stops.",
+		str_check_text="There's poudrin hail buffeting ",
+	),
+	EwEventDef(
+		event_type=ewcfg.event_type_meteor_shower,
+		str_name="a meteor shower",
+		pois=[ewcfg.poi_id_thesummit],
+		length=9, # 2h15m
+		buffer=14, # 3h30m
+		str_event_start="Streaks of light begin illuminating the night sky. A **METEOR SHOWER** has begun!",
+		str_event_ongoing="There's a meteor shower occurring overhead.",
+		str_event_end="The meteors finish their full-on-assault of the stars, leaving the morning to wake.",
+		str_check_text="There's a meteor shower gracing ",
+	),
+	EwEventDef(
+		event_type= ewcfg.event_type_raider_incursion,
+		str_name="a raider incursion",
+		pois=[ewcfg.poi_id_westglocksbury, ewcfg.poi_id_jaywalkerplain, ewcfg.poi_id_dreadford],
+		length=72, # 18h
+		buffer=4, #1h
+		str_event_start="A fucking raider appears, holy shit. It's like Mad Max up in here! A **RAIDER INCURSION** has begun!",
+		str_event_ongoing="There's a raider incursion incursioning.",
+		str_event_end="The raiders leave, clearly done with whatever their shitty goal was.",
+		str_check_text="There's a raider incursion incursioning ",
+	),
+	EwEventDef(
+		event_type= ewcfg.event_type_slimeunist_protest,
+		str_name="a slimeunist protest",
+		pois=[ewcfg.poi_id_gatlingsdale, ewcfg.poi_id_northsleezeborough], # College districts
+		length=72, # 18h
+		buffer=4, #1h
+		str_event_start="A bunch of college students wielding angrily-written signs begin marching down the street! A **SLIMEUNIST PROTEST** has begun!",
+		str_event_ongoing="There's a slimeunist protest occurring.",
+		str_event_end="The slimeunist protest disperses, probably due to the protester's curfews.",
+		str_check_text="There's a slimeunist protest occurring in ",
+	),
+	EwEventDef(
+		event_type=ewcfg.event_type_smog_warning,
+		str_name="a smog warning",
+		pois=[ewcfg.poi_id_smogsburg, ewcfg.poi_id_downtown, ewcfg.poi_id_greenlightdistrict],
+		length=48, #12h
+		buffer=2, # 30m
+		str_event_start="The air becomes too thick to breathe in. A **SMOG WARNING** has been issued!",
+		str_event_ongoing="The air is too thick to see or breathe through.",
+		str_event_end="The smog lifts, leaving the air mostly-breathable.",
+		str_check_text="There's a smog warning placed upon ",
+	),
+	EwEventDef(
+		event_type=ewcfg.event_type_dimensional_rift,
+		str_name="a dimensional rift",
+		pois=landlocked_destinations.keys(),
+		length=95, #23h45m
+		buffer=0,
+		str_event_start="A rift in space tears across the air. A **DIMENSIONAL RIFT** across the city has formed!",
+		str_event_ongoing="A dimensional rift is present.",
+		str_event_end="The dimensional rift closes, like a crab being sucked into an underwater pipe.",
+		str_check_text="There's a dimensional rift tearing apart ",
+	),
+	EwEventDef(
+		event_type=ewcfg.event_type_jape_storm,
+		str_name="a japestorm",
+		pois=[],
+		length=24, #6h
+		buffer=4, #1h
+		str_event_start="Mousetraps fall from the sky and clowns appear around every streetcorner. A **JAPESTORM** has begun!",
+		str_event_ongoing="A japestorm is joking.",
+		str_event_end="The **FUN POLICE** arrive. Clowns are clubbed to the pavement and japes of all sizes are murdered and detained.",
+		str_check_text="There's a japestorm jesting around ",
+	),
+	EwEventDef(
+		event_type=ewcfg.event_type_fishing_frenzy,
+		str_name="a fishing frenzy",
+		pois=[ewcfg.poi_id_toxington_pier, ewcfg.poi_id_jaywalkerplain_pier, ewcfg.poi_id_crookline_pier, ewcfg.poi_id_assaultflatsbeach_pier, ewcfg.poi_id_slimesend_pier, ewcfg.poi_id_ferry, ewcfg.poi_id_blackpond], # Piers - JRP and Moon purposely excluded
+		length=24, #6h
+		buffer=8, #2h
+		str_event_start="A swarm of fish enter the area. A **FISHING FRENZY** has begun!",
+		str_event_ongoing="Fish are hopping and popping.",
+		str_event_end="So many fish have been !reeled up that the fishing frenzy disperses.",
+		str_check_text="There's a fishing frenzy in ",
+	),
+	EwEventDef(
+		event_type=ewcfg.event_type_gas_leak,
+		str_name="a gas leak",
+		pois=[ewcfg.poi_id_tt_mines, ewcfg.poi_id_tt_mines_sweeper, ewcfg.poi_id_tt_mines_bubble, ewcfg.poi_id_cv_mines, ewcfg.poi_id_cv_mines_sweeper, ewcfg.poi_id_cv_mines_bubble], # Mines - JRM purposely excluded
+		length=24, #6h
+		buffer=8, #2h
+		str_event_start="A mine wall collapses, and a pocket of Adderall® gas opens up! A **GAS LEAK** envelops the area!",
+		str_event_ongoing="Adderall gas floods the mine.",
+		str_event_end="The gas leak disperses. Get ready for amphetamine withdrawal, kiddo!",
+		str_check_text="There's a gas leak in ",
+	),
 ]
 
 event_type_to_def = {}

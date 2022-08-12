@@ -183,7 +183,7 @@ def get_normal_attack(weapon_type = "normal", cost_multiplier = None, damage_mul
                 # Maybe reverse as {source: type} when declaring, then update with {type: magnitude + apply_status.get(type, 0)}
                 # then remove the source key from the dict
                 if source == ewcfg.mutation_id_napalmsnot:
-                    ctn.apply_status.update({status: int(damage/2)})
+                    ctn.apply_status[status] = damage // 2
         else:
             ctn.miss = True
 

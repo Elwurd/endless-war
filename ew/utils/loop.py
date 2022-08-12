@@ -67,6 +67,7 @@ async def event_tick(id_server):
     time_now = int(time.time())
     resp_cont = EwResponseContainer(id_server=id_server)
     try:
+        # Get all events with an expiry right now or in the past
         data = bknd_core.execute_sql_query(
             "SELECT {id_event} FROM world_events WHERE {time_expir} <= %s AND {time_expir} > 0 AND id_server = %s".format(
                 id_event=ewcfg.col_id_event,
@@ -75,7 +76,8 @@ async def event_tick(id_server):
                 time_now,
                 id_server,
             ))
-
+        
+        # Do end-of-event actions and delete the world event
         for row in data:
                 try:
                     event_data = EwWorldEvent(id_event=row[0])
@@ -105,7 +107,6 @@ async def event_tick(id_server):
 
                     elif event_data.event_type == ewcfg.event_type_alarmclock:
                         clock_item = EwItem(event_data.event_props.get("clock_id"))
-                        print(clock_item.item_props)
                         clock_item.item_props["furniture_look_desc"] = "There's an alarm clock that's stopped working."
                         clock_item.item_props["furniture_desc"] = "The annoying sound this thing makes perfectly explains why the bazaar sells so many broken clocks. Or at least that's what it used to do before the shitty little batteries gave out. Could try setting it again?"
                         clock_item.persist()
@@ -114,7 +115,12 @@ async def event_tick(id_server):
                         void_poi = poi_static.id_to_poi.get(ewcfg.poi_id_thevoid)
                         void_poi.neighbors.pop(event_data.event_props.get('poi'), "")
                         bknd_event.create_void_connection(id_server)
-
+                    elif event_data.event_type == ewcfg.event_type_dimensional_rift:
+                        rift_poi = poi_static.id_to_poi.get(event_data.event_props.get('poi'))
+                        print(event_data.event_props.get('sisterlocation'))
+                        print(rift_poi.neighbors)
+                        rift_poi.neighbors.pop(event_data.event_props.get('sisterlocation'), "")
+                        print(rift_poi.neighbors)
                     if len(response) > 0:
                         poi = event_data.event_props.get('poi')
                         channel = event_data.event_props.get('channel')
@@ -134,6 +140,42 @@ async def event_tick(id_server):
                 except Exception as e:
                     ewutils.logMsg("Error in event tick for server {}:{}".format(id_server, e))
 
+        # Get all events that activate right now
+        activate_data = bknd_core.execute_sql_query(
+            "SELECT {id_event} FROM world_events WHERE {time_activate} >= {time_now} AND {time_activate} < {time_now} + {interval} AND id_server = %s".format(
+                id_event=ewcfg.col_id_event,
+                time_activate=ewcfg.col_time_activate,
+                time_now=time_now,
+                interval=ewcfg.event_tick_length,
+            ), (
+                id_server,
+            ))
+
+        # Do activation alerts for specific world events
+        for row in activate_data:
+            try:
+                event_data = EwWorldEvent(id_event=row[0])
+                event_def = poi_static.event_type_to_def.get(event_data.event_type)
+
+                # If the event is a POI event
+                if event_data.event_type in ewcfg.poi_events:
+                    poi = poi_static.id_to_poi.get(event_data.event_props.get('poi'))
+
+                    # Create alert in poi channel 
+                    resp_cont.add_channel_response(poi.channel, event_def.str_event_start)
+
+                    gangbase_alert = "A peculiar event has manifested somewhere in NLACakaNM..."
+                    # If gangbase alert should be specific
+                    if event_data.event_props.get('alert') == "gangbase":
+                        gangbase_alert = "It seems {} has manifested in {}.".format(event_def.str_name, poi.str_name)
+
+                    for channel in ewcfg.hideout_channels:
+                        resp_cont.add_channel_response(channel, gangbase_alert)
+
+
+            except Exception as e:
+                ewutils.logMsg("Error in event tick for server {}:{}".format(id_server, e))
+                
         await resp_cont.post()
 
     except Exception as e:
@@ -163,10 +205,22 @@ async def decaySlimes(id_server = None):
             users = cursor.fetchall()
             total_decayed = 0
 
+            # Create a list of districts where you gain slime passively rather than decay
+            slimeboost_pois = []
+            # Radiation storms boost slime
+            world_events = bknd_event.get_world_events(id_server=id_server)
+            for id_event in world_events:
+                if world_events.get(id_event) == ewcfg.event_type_radiation_storm:
+                    event_data = EwWorldEvent(id_event=id_event)
+                    slimeboost_pois.append(event_data.event_props.get('poi'))
+            # Block parties have a setting to boost slime
             block_party = EwGamestate(id_state='blockparty', id_server=id_server)
             block_poi = ''.join([i for i in block_party.value if not i.isdigit()])
-            if block_poi == 'outsidethe':
-                block_poi = ewcfg.poi_id_711
+            slimeboost_pois.append(block_poi)
+            # Damn you, 7/11!
+            if 'outsidethe' in slimeboost_pois:
+                slimeboost_pois.append(ewcfg.poi_id_711)
+
             for user in users:
                 user_data = EwUser(id_user=user[0], id_server=id_server)
                 slimes_to_decay = user_data.slimes - (user_data.slimes * (.5 ** (ewcfg.update_market / ewutils.calc_half_life(user_data.slimes))))
@@ -177,7 +231,8 @@ async def decaySlimes(id_server = None):
                     slimes_to_decay += 1
                 slimes_to_decay = int(slimes_to_decay)
 
-                if user_data.poi == block_poi:
+                # User will gain slime while in a blockparty/rad storm
+                if user_data.poi in slimeboost_pois:
                     slimes_to_decay -= ewcfg.blockparty_slimebonus_per_tick
 
                 if slimes_to_decay >= 1:
@@ -206,6 +261,10 @@ async def decaySlimes(id_server = None):
                     slimes_to_decay += 1
                 slimes_to_decay = int(slimes_to_decay)
 
+                # District will gain slime during a block party slowly
+                if district_data.name in slimeboost_pois:
+                    slimes_to_decay -= ewcfg.blockparty_slimebonus_per_tick / 10
+
                 if slimes_to_decay >= 1:
                     district_data.change_slimes(n=-slimes_to_decay, source=ewcfg.source_decay)
                     district_data.persist()
@@ -233,119 +292,28 @@ async def decaySlimes(id_server = None):
 """
 
 
-def kill_quitters(id_server = None):
-    if id_server != None:
-        try:
-            client = ewutils.get_client()
-            server = client.get_guild(id_server)
-            conn_info = bknd_core.databaseConnect()
-            conn = conn_info.get('conn')
-            cursor = conn.cursor()
+async def kill_quitters(id_server):
+    client = ewutils.get_client()
+    server = client.get_guild(id_server)
 
-            cursor.execute("SELECT id_user FROM users WHERE id_server = %s AND ( life_state > 0 OR slimes < 0 )".format(
-            ), (
-                id_server,
-            ))
+    users = bknd_core.execute_sql_query("SELECT id_user FROM users WHERE id_server = %s AND ( life_state > 0 OR slimes < 0 )", (
+        id_server,
+    ))
 
-            users = cursor.fetchall()
+    for user in users:
+        member = server.get_member(user[0])
 
-            for user in users:
-                member = server.get_member(user[0])
-
-                # Make sure to kill players who may have left while the bot was offline.
-                if member is None:
-                    try:
-                        user_data = EwUser(id_user=user[0], id_server=id_server)
-
-                        user_data.trauma = ewcfg.trauma_id_suicide
-                        user_data.die(cause=ewcfg.cause_leftserver)
-                        user_data.persist()
-
-                        ewutils.logMsg('Player with id {} killed for leaving the server.'.format(user[0]))
-                    except:
-                        ewutils.logMsg('Failed to kill member who left the server.')
-
-        finally:
-            # Clean up the database handles.
-            cursor.close()
-            bknd_core.databaseClose(conn_info)
-
-
-""" Flag all users in the Outskirts for PvP """
-
-
-async def flag_outskirts(id_server = None):
-    if id_server != None:
-        try:
-            client = ewutils.get_client()
-            server = client.get_guild(id_server)
-            conn_info = bknd_core.databaseConnect()
-            conn = conn_info.get('conn')
-            cursor = conn.cursor()
-
-            cursor.execute("SELECT id_user FROM users WHERE id_server = %s AND poi IN %s".format(
-            ), (
-                id_server,
-                tuple(poi_static.outskirts)
-
-            ))
-
-            users = cursor.fetchall()
-
-            for user in users:
+        # Make sure to kill players who may have left while the bot was offline.
+        if member is None:
+            try:
                 user_data = EwUser(id_user=user[0], id_server=id_server)
-                # Flag the user for PvP
-                enlisted = True if user_data.life_state == ewcfg.life_state_enlisted else False
-                user_data.time_expirpvp = ewutils.calculatePvpTimer(user_data.time_expirpvp, ewcfg.time_pvp_vulnerable_districts, enlisted)
-                user_data.persist()
-                await ewrolemgr.updateRoles(client=client, member=server.get_member(user_data.id_user))
 
-            conn.commit()
-        finally:
-            # Clean up the database handles.
-            cursor.close()
-            bknd_core.databaseClose(conn_info)
+                user_data.trauma = ewcfg.trauma_id_suicide
+                await user_data.die(cause=ewcfg.cause_leftserver)
 
-
-"""
-    Flag all users in vulnerable territory, defined as capturable territory (streets) and outskirts.
-"""
-
-
-async def flag_vulnerable_districts(id_server = None):
-    if id_server != None:
-        try:
-            client = ewutils.get_client()
-            server = client.get_guild(id_server)
-            conn_info = bknd_core.databaseConnect()
-            conn = conn_info.get('conn')
-            cursor = conn.cursor()
-
-            cursor.execute("SELECT id_user FROM users WHERE id_server = %s AND poi IN %s".format(
-            ), (
-                id_server,
-                tuple(poi_static.vulnerable_districts)
-
-            ))
-
-            users = cursor.fetchall()
-
-            for user in users:
-                user_data = EwUser(id_user=user[0], id_server=id_server)
-                member = server.get_member(user_data.id_user)
-
-                # Flag the user for PvP
-                enlisted = True if user_data.life_state == ewcfg.life_state_enlisted else False
-                user_data.time_expirpvp = ewutils.calculatePvpTimer(user_data.time_expirpvp, ewcfg.time_pvp_vulnerable_districts, enlisted)
-                user_data.persist()
-
-                await ewrolemgr.updateRoles(client=client, member=member, remove_or_apply_flag='apply')
-
-            conn.commit()
-        finally:
-            # Clean up the database handles.
-            cursor.close()
-            bknd_core.databaseClose(conn_info)
+                ewutils.logMsg('Player with id {} killed for leaving the server.'.format(user[0]))
+            except Exception as e:
+                ewutils.logMsg(f'Failed to kill member who left the server: {e}')
 
 
 """
@@ -367,133 +335,102 @@ async def bleed_tick_loop(id_server):
 """ Bleed slime for all users """
 
 
-async def bleedSlimes(id_server = None):
-    if id_server != None:
-        try:
-            client = ewutils.get_client()
-            server = client.get_guild(id_server)
-            conn_info = bknd_core.databaseConnect()
-            conn = conn_info.get('conn')
-            cursor = conn.cursor()
+async def bleedSlimes(id_server):
+    client = ewutils.get_client()
+    server = client.get_guild(id_server)
 
-            cursor.execute("SELECT id_user FROM users WHERE id_server = %s AND {bleed_storage} > 1".format(
-                bleed_storage=ewcfg.col_bleed_storage
-            ), (
-                id_server,
-            ))
+    users = bknd_core.execute_sql_query("SELECT id_user FROM users WHERE id_server = %s AND {bleed_storage} > 1".format(
+        bleed_storage=ewcfg.col_bleed_storage
+    ), (
+        id_server,
+    ))
 
-            users = cursor.fetchall()
-            total_bled = 0
-            deathreport = ""
-            resp_cont = EwResponseContainer(id_server=id_server)
-            for user in users:
-                user_data = EwUser(id_user=user[0], id_server=id_server)
+    total_bled = 0
+    resp_cont = EwResponseContainer(id_server=id_server)
+    for user in users:
+        user_data = EwUser(id_user=user[0], id_server=id_server)
 
-                mutations = user_data.get_mutations()
-                member = server.get_member(user_data.id_user)
-                if ewcfg.mutation_id_bleedingheart not in mutations or user_data.time_lasthit < int(time.time()) - ewcfg.time_bhbleed:
-                    slimes_to_bleed = user_data.bleed_storage * (
-                            1 - .5 ** (ewcfg.bleed_tick_length / ewcfg.bleed_half_life))
-                    slimes_to_bleed = max(slimes_to_bleed, ewcfg.bleed_tick_length * 1000)
-                    slimes_dropped = user_data.totaldamage + user_data.slimes
+        mutations = user_data.get_mutations()
+        member = server.get_member(user_data.id_user)
+        if ewcfg.mutation_id_bleedingheart not in mutations or user_data.time_lasthit < int(time.time()) - ewcfg.time_bhbleed:
+            slimes_to_bleed = user_data.bleed_storage * (
+                    1 - .5 ** (ewcfg.bleed_tick_length / ewcfg.bleed_half_life))
+            slimes_to_bleed = max(slimes_to_bleed, ewcfg.bleed_tick_length * 1000)
 
-                    # round up or down, randomly weighted
-                    remainder = slimes_to_bleed - int(slimes_to_bleed)
-                    if random.random() < remainder:
-                        slimes_to_bleed += 1
-                    slimes_to_bleed = int(slimes_to_bleed)
+            # round up or down, randomly weighted
+            remainder = slimes_to_bleed - int(slimes_to_bleed)
+            if random.random() < remainder:
+                slimes_to_bleed += 1
+            slimes_to_bleed = int(slimes_to_bleed)
 
-                    slimes_to_bleed = min(slimes_to_bleed, user_data.bleed_storage)
+            slimes_to_bleed = min(slimes_to_bleed, user_data.bleed_storage)
 
-                    if slimes_to_bleed >= 1:
+            if slimes_to_bleed >= 1:
 
-                        real_bleed = round(slimes_to_bleed)  # * bleed_mod)
+                real_bleed = round(slimes_to_bleed)  # * bleed_mod)
 
-                        user_data.bleed_storage -= slimes_to_bleed
-                        user_data.change_slimes(n=- real_bleed, source=ewcfg.source_bleeding)
+                user_data.bleed_storage -= slimes_to_bleed
+                user_data.change_slimes(n=- real_bleed, source=ewcfg.source_bleeding)
 
-                        district_data = EwDistrict(id_server=id_server, district=user_data.poi)
-                        district_data.change_slimes(n=real_bleed, source=ewcfg.source_bleeding)
-                        district_data.persist()
+                district_data = EwDistrict(id_server=id_server, district=user_data.poi)
+                district_data.change_slimes(n=real_bleed, source=ewcfg.source_bleeding)
+                district_data.persist()
 
-                        if user_data.slimes < 0:
-                            user_data.trauma = ewcfg.trauma_id_environment
-                            die_resp = user_data.die(cause=ewcfg.cause_bleeding)
-                            # user_data.change_slimes(n = -slimes_dropped / 10, source = ewcfg.source_ghostification)
-                            player_data = EwPlayer(id_server=user_data.id_server, id_user=user_data.id_user)
-                            resp_cont.add_response_container(die_resp)
-                        user_data.persist()
+                if user_data.slimes < 0:
+                    user_data.trauma = ewcfg.trauma_id_environment
+                    die_resp = await user_data.die(cause=ewcfg.cause_bleeding)
+                    resp_cont.add_response_container(die_resp)
+                user_data.persist()
 
-                        total_bled += real_bleed
+                total_bled += real_bleed
 
-                    await ewrolemgr.updateRoles(client=client, member=member)
-
-            await resp_cont.post()
-
-            conn.commit()
-        finally:
-            # Clean up the database handles.
-            cursor.close()
-            bknd_core.databaseClose(conn_info)
+    await resp_cont.post()
 
 
 """ Bleed slime for all enemies """
 
 
-async def enemyBleedSlimes(id_server = None):
-    if id_server != None:
-        try:
-            conn_info = bknd_core.databaseConnect()
-            conn = conn_info.get('conn')
-            cursor = conn.cursor()
+async def enemyBleedSlimes(id_server):
+    enemies = bknd_core.execute_sql_query("SELECT id_enemy FROM enemies WHERE id_server = %s AND {bleed_storage} > 1".format(
+        bleed_storage=ewcfg.col_enemy_bleed_storage
+    ), (
+        id_server,
+    ))
 
-            cursor.execute("SELECT id_enemy FROM enemies WHERE id_server = %s AND {bleed_storage} > 1".format(
-                bleed_storage=ewcfg.col_enemy_bleed_storage
-            ), (
-                id_server,
-            ))
+    total_bled = 0
+    resp_cont = EwResponseContainer(id_server=id_server)
+    for enemy in enemies:
+        enemy_data = EwEnemy(id_enemy=enemy[0], id_server=id_server)
+        slimes_to_bleed = enemy_data.bleed_storage * (1 - .5 ** (ewcfg.bleed_tick_length / ewcfg.bleed_half_life))
+        slimes_to_bleed = max(slimes_to_bleed, ewcfg.bleed_tick_length * 1000)
+        slimes_to_bleed = min(slimes_to_bleed, enemy_data.bleed_storage)
 
-            enemies = cursor.fetchall()
-            total_bled = 0
-            resp_cont = EwResponseContainer(id_server=id_server)
-            for enemy in enemies:
-                enemy_data = EwEnemy(id_enemy=enemy[0], id_server=id_server)
-                slimes_to_bleed = enemy_data.bleed_storage * (1 - .5 ** (ewcfg.bleed_tick_length / ewcfg.bleed_half_life))
-                slimes_to_bleed = max(slimes_to_bleed, ewcfg.bleed_tick_length * 1000)
-                slimes_to_bleed = min(slimes_to_bleed, enemy_data.bleed_storage)
+        district_data = EwDistrict(id_server=id_server, district=enemy_data.poi)
 
-                district_data = EwDistrict(id_server=id_server, district=enemy_data.poi)
+        # round up or down, randomly weighted
+        remainder = slimes_to_bleed - int(slimes_to_bleed)
+        if random.random() < remainder:
+            slimes_to_bleed += 1
+        slimes_to_bleed = int(slimes_to_bleed)
 
-                # round up or down, randomly weighted
-                remainder = slimes_to_bleed - int(slimes_to_bleed)
-                if random.random() < remainder:
-                    slimes_to_bleed += 1
-                slimes_to_bleed = int(slimes_to_bleed)
+        if slimes_to_bleed >= 1:
+            enemy_data.bleed_storage -= slimes_to_bleed
+            enemy_data.change_slimes(n=- slimes_to_bleed, source=ewcfg.source_bleeding)
+            enemy_data.persist()
+            district_data.change_slimes(n=slimes_to_bleed, source=ewcfg.source_bleeding)
+            district_data.persist()
+            total_bled += slimes_to_bleed
 
-                if slimes_to_bleed >= 1:
-                    enemy_data.bleed_storage -= slimes_to_bleed
-                    enemy_data.change_slimes(n=- slimes_to_bleed, source=ewcfg.source_bleeding)
-                    enemy_data.persist()
-                    district_data.change_slimes(n=slimes_to_bleed, source=ewcfg.source_bleeding)
-                    district_data.persist()
-                    total_bled += slimes_to_bleed
+            if enemy_data.slimes <= 0:
+                bknd_hunt.delete_enemy(enemy_data)
 
-                    if enemy_data.slimes <= 0:
-                        bknd_hunt.delete_enemy(enemy_data)
-
-            await resp_cont.post()
-            conn.commit()
-        finally:
-            # Clean up the database handles.
-            cursor.close()
-            bknd_core.databaseClose(conn_info)
+    await resp_cont.post()
 
 
 """ Reduce inebriation for every player in the server. """
 
 
-async def pushdownServerInebriation(id_server = None):
-    if id_server != None:
+async def pushdownServerInebriation(id_server):
         try:
             bknd_core.execute_sql_query("UPDATE users SET {inebriation} = {inebriation} - {tick} WHERE id_server = %s AND {inebriation} > {limit}".format(
                 inebriation=ewcfg.col_inebriation,
@@ -502,8 +439,8 @@ async def pushdownServerInebriation(id_server = None):
             ), (
                 id_server,
             ))
-        except:
-            ewutils.logMsg("Failed to pushdown server inebriation.")     
+        except Exception as e:
+            ewutils.logMsg(f"Failed to pushdown server inebriation: {e}")
 
 """
     Coroutine that continually calls burnSlimes; is called once per server, and not just once globally
@@ -521,107 +458,112 @@ async def burn_tick_loop(id_server):
 """ Burn slime for all users """
 
 
-async def burnSlimes(id_server = None):
-    if id_server != None:
-        time_now = int(time.time())
-        client = ewutils.get_client()
-        server = client.get_guild(id_server)
-        status_origin = 'user'
+async def burnSlimes(id_server):
+    time_now = int(time.time())
+    client = ewutils.get_client()
+    server = client.get_guild(id_server)
+    status_origin = 'user'
 
-        results = {}
+    results = {}
 
-        # Get users with harmful status effects
-        data = bknd_core.execute_sql_query("SELECT {id_user}, {value}, {source}, {id_status} from status_effects WHERE {id_status} IN %s and {id_server} = %s".format(
-            id_user=ewcfg.col_id_user,
-            value=ewcfg.col_value,
-            id_status=ewcfg.col_id_status,
-            id_server=ewcfg.col_id_server,
-            source=ewcfg.col_source
-        ), (
-            tuple(ewcfg.harmful_status_effects),
-            id_server
-        ))
+    # Get users with harmful status effects
+    data = bknd_core.execute_sql_query("SELECT {id_user}, {value}, {source}, {id_status} from status_effects WHERE {id_status} IN %s and {id_server} = %s".format(
+        id_user=ewcfg.col_id_user,
+        value=ewcfg.col_value,
+        id_status=ewcfg.col_id_status,
+        id_server=ewcfg.col_id_server,
+        source=ewcfg.col_source
+    ), (
+        tuple(ewcfg.harmful_status_effects),
+        id_server
+    ))
 
-        resp_cont = EwResponseContainer(id_server=id_server)
-        for result in data:
-            user_data = EwUser(id_user=result[0], id_server=id_server)
-            member = server.get_member(user_data.id_user)
+    resp_cont = EwResponseContainer(id_server=id_server)
+    for result in data:
+        user_data = EwUser(id_user=result[0], id_server=id_server)
 
-            slimes_dropped = user_data.totaldamage + user_data.slimes
-            used_status_id = result[3]
+        slimes_dropped = user_data.totaldamage + user_data.slimes
+        used_status_id = result[3]
 
-            # Deal 10% of total slime to burn every second
-            slimes_to_burn = math.ceil(int(float(result[1])) * ewcfg.burn_tick_length / ewcfg.time_expire_burn)
+        # Deal 10% of total slime to burn every second
+        slimes_to_burn = math.ceil(int(float(result[1])) * ewcfg.burn_tick_length / ewcfg.time_expire_burn)
+            
 
-            # Check if a status effect originated from an enemy or a user.
-            killer_data = EwUser(id_server=id_server, id_user=result[2])
-            if killer_data == None:
-                killer_data = EwEnemy(id_server=id_server, id_enemy=result[2])
-                if killer_data != None:
-                    status_origin = 'enemy'
-                else:
-                    # For now, skip over any status that did not originate from a user or an enemy. This might be changed in the future.
-                    continue
+        # Check if a status effect originated from an enemy or a user.
+        killer_data = EwUser(id_server=id_server, id_user=result[2])
+        if killer_data is None:
+            killer_data = EwEnemy(id_server=id_server, id_enemy=result[2])
+            if killer_data is not None:
+                status_origin = 'enemy'
+            else:
+                status_origin = 'other'
 
+
+
+        if status_origin == 'user':
+            # Damage stats
+            ewstats.change_stat(user=killer_data, metric=ewcfg.stat_lifetime_damagedealt, n=slimes_to_burn)
+
+        # Player died
+        if user_data.slimes - slimes_to_burn < 0:
+            weapon = static_weapons.weapon_map.get(ewcfg.weapon_id_molotov)
+
+            player_data = EwPlayer(id_server=user_data.id_server, id_user=user_data.id_user)
+            killer = EwPlayer(id_server=id_server, id_user=killer_data.id_user)
+            poi = poi_static.id_to_poi.get(user_data.poi)
+
+            # Kill stats
             if status_origin == 'user':
-                # Damage stats
-                ewstats.change_stat(user=killer_data, metric=ewcfg.stat_lifetime_damagedealt, n=slimes_to_burn)
+                ewstats.increment_stat(user=killer_data, metric=ewcfg.stat_kills)
+                ewstats.track_maximum(user=killer_data, metric=ewcfg.stat_biggest_kill, value=int(slimes_dropped))
 
-            # Player died
-            if user_data.slimes - slimes_to_burn < 0:
-                weapon = static_weapons.weapon_map.get(ewcfg.weapon_id_molotov)
+                if killer_data.slimelevel > user_data.slimelevel:
+                    ewstats.increment_stat(user=killer_data, metric=ewcfg.stat_lifetime_ganks)
+                elif killer_data.slimelevel < user_data.slimelevel:
+                    ewstats.increment_stat(user=killer_data, metric=ewcfg.stat_lifetime_takedowns)
 
-                player_data = EwPlayer(id_server=user_data.id_server, id_user=user_data.id_user)
-                killer = EwPlayer(id_server=id_server, id_user=killer_data.id_user)
-                poi = poi_static.id_to_poi.get(user_data.poi)
-
-                # Kill stats
-                if status_origin == 'user':
-                    ewstats.increment_stat(user=killer_data, metric=ewcfg.stat_kills)
-                    ewstats.track_maximum(user=killer_data, metric=ewcfg.stat_biggest_kill, value=int(slimes_dropped))
-
-                    if killer_data.slimelevel > user_data.slimelevel:
-                        ewstats.increment_stat(user=killer_data, metric=ewcfg.stat_lifetime_ganks)
-                    elif killer_data.slimelevel < user_data.slimelevel:
-                        ewstats.increment_stat(user=killer_data, metric=ewcfg.stat_lifetime_takedowns)
-
-                    # Collect bounty
-                    coinbounty = int(user_data.bounty / ewcfg.slimecoin_exchangerate)  # 100 slime per coin
-
-                    if user_data.slimes >= 0:
-                        killer_data.change_slimecoin(n=coinbounty, coinsource=ewcfg.coinsource_bounty)
 
                 # Kill player
                 if status_origin == 'user':
                     user_data.id_killer = killer_data.id_user
                 elif status_origin == 'enemy':
                     user_data.id_killer = killer_data.id_enemy
+                elif status_origin == 'other':
+                    user_data.id_killer = 0
 
-                user_data.trauma = ewcfg.trauma_id_environment
-                die_resp = user_data.die(cause=ewcfg.cause_burning)
-                # user_data.change_slimes(n = -slimes_dropped / 10, source = ewcfg.source_ghostification)
+                # Collect bounty
+                coinbounty = int(user_data.bounty / ewcfg.slimecoin_exchangerate)  # 100 slime per coin
 
-                resp_cont.add_response_container(die_resp)
 
-                if used_status_id == ewcfg.status_burning_id:
-                    deathreport = "{} has burned to death.".format(player_data.display_name)
-                elif used_status_id == ewcfg.status_acid_id:
-                    deathreport = "{} has been melted to death by acid.".format(player_data.display_name)
-                elif used_status_id == ewcfg.status_spored_id:
-                    deathreport = "{} has been overrun by spores.".format(player_data.display_name)
-                else:
-                    deathreport = ""
-                resp_cont.add_channel_response(poi.channel, deathreport)
+                if user_data.slimes >= 0:
+                    killer_data.change_slimecoin(n=coinbounty, coinsource=ewcfg.coinsource_bounty)
 
-                user_data.trauma = weapon.id_weapon
+            # Kill player
+            if status_origin == 'user':
+                user_data.id_killer = killer_data.id_user
+            elif status_origin == 'enemy':
+                user_data.id_killer = killer_data.id_enemy
 
-                user_data.persist()
-                await ewrolemgr.updateRoles(client=client, member=member)
+            user_data.trauma = ewcfg.trauma_id_environment
+            die_resp = await user_data.die(cause=ewcfg.cause_burning)
+
+            resp_cont.add_response_container(die_resp)
+
+            if used_status_id == ewcfg.status_burning_id:
+                deathreport = "{} has burned to death.".format(player_data.display_name)
+            elif used_status_id == ewcfg.status_acid_id:
+                deathreport = "{} has been melted to death by acid.".format(player_data.display_name)
+            elif used_status_id == ewcfg.status_spored_id:
+                deathreport = "{} has been overrun by spores.".format(player_data.display_name)
             else:
-                user_data.change_slimes(n=-slimes_to_burn, source=ewcfg.source_damage)
-                user_data.persist()
+                deathreport = ""
+            resp_cont.add_channel_response(poi.channel, deathreport)
 
-        await resp_cont.post()
+        else:
+            user_data.change_slimes(n=-slimes_to_burn, source=ewcfg.source_damage)
+            user_data.persist()
+
+    await resp_cont.post()
 
 
 async def enemyBurnSlimes(id_server):
@@ -781,6 +723,7 @@ async def decrease_food_multiplier():
 
 async def spawn_enemies(id_server = None, debug = False):
     market_data = EwMarket(id_server=id_server)
+    world_events = bknd_event.get_world_events(id_server=id_server, active_only=True)
     resp_list = []
     chosen_type = None
     chosen_POI = None
@@ -807,7 +750,29 @@ async def spawn_enemies(id_server = None, debug = False):
                 resp_list.append(hunt_utils.spawn_enemy(id_server=id_server, pre_chosen_type=ewcfg.enemy_type_slimeoidtrainer))
             else:
                 resp_list.append(hunt_utils.spawn_enemy(id_server=id_server, pre_chosen_type=ewcfg.enemy_type_ug_slimeoidtrainer))
-    
+
+    # Chance to spawn enemies that correspond to POI Events.
+    if random.randrange(4) == 0:
+        for id_event in world_events:
+            # Only if the event corresponds to a type of event that spawns enemies
+            if world_events.get(id_event) in [ewcfg.event_type_raider_incursion, ewcfg.event_type_slimeunist_protest, ewcfg.event_type_radiation_storm]:
+                event_data = bknd_event.EwWorldEvent(id_event=id_event)
+
+                # If the event is a raider incursion
+                if event_data.event_type == ewcfg.event_type_raider_incursion:
+                        chosen_type = random.choice(ewcfg.raider_incursion_enemies)
+                        resp_list.append(hunt_utils.spawn_enemy(id_server=id_server, pre_chosen_type=chosen_type, pre_chosen_poi=event_data.event_props.get('poi')))
+                # If the event is a slimeunist protest
+                elif event_data.event_type == ewcfg.event_type_slimeunist_protest:
+                    chosen_type = random.choice(ewcfg.slimeunist_protest_enemies)
+                    resp_list.append(hunt_utils.spawn_enemy(id_server=id_server, pre_chosen_type=chosen_type, pre_chosen_poi=event_data.event_props.get('poi')))
+                # If the event is a radiation storm
+                elif event_data.event_type == ewcfg.event_type_radiation_storm:
+                    if random.randrange(12) == 0:
+                        chosen_type = random.choice(ewcfg.radiation_storm_enemies)
+                        resp_list.append(hunt_utils.spawn_enemy(id_server=id_server, pre_chosen_type=chosen_type, pre_chosen_poi=event_data.event_props.get('poi')))
+
+
     for cont in resp_list:
         await cont.post()
 
@@ -1350,6 +1315,10 @@ async def clock_tick_loop(id_server = None, force_active = False):
                             ewutils.logMsg("Started rent calc...")
                             await apt_utils.rent_time(id_server)
                             ewutils.logMsg("...finished rent calc.")
+
+                        if random.randint(1, 16) == 1: # 1/16 chance to start a random poi event
+                            ewutils.logMsg("Creating POI event...")
+                            await weather_utils.create_poi_event(id_server)
 
                     elif market_data.clock == 13 and market_data.day % 28 == 0: #regulate slimesea items every week
                         ewutils.logMsg('Regulating Slime Sea items...')

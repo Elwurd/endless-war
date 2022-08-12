@@ -316,7 +316,7 @@ async def award_fish(fisher, cmd, user_data):
                     response = "You reel onto someone, but they're too fat! Your line breaks."
                 else:
                     ewutils.moves_active[target_data.id_user] = 0
-                    rutils.movement_checker(target_data, poi_static.id_to_poi.get(target_data.poi), fisher.cast_poi)
+                    await rutils.movement_checker(target_data, poi_static.id_to_poi.get(target_data.poi), fisher.cast_poi, cmd=cmd)
 
                     # Send a bit of a wait message
                     response = "***HRRRRKK-!!!***"

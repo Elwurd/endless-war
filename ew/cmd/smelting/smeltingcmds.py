@@ -202,8 +202,6 @@ async def smelt(cmd):
 # "wcim", "whatcanimake", "whatmake", "usedfor" command - finds the item the player is asking for and tells them all smelting recipes that use that item
 # added by huck on 9/3/2020
 async def find_recipes_by_item(cmd):
-    user_data = EwUser(member=cmd.message.author)
-
     used_recipe = None
 
     # if the player specifies an item name
@@ -215,15 +213,8 @@ async def find_recipes_by_item(cmd):
         if found_recipe != None:
             used_recipe = found_recipe.id_recipe
 
-        # item_sought_in_inventory = bknd_item.find_item(item_search=sought_item, id_user=cmd.message.author.id, id_server=cmd.guild.id if cmd.guild is not None else None)
         makes_sought_item = []
         uses_sought_item = []
-
-        # if the item name is an item in the player's inventory, we're assuming that the player is looking up information about this item specifically.
-        # if item_sought_in_inventory is not None:
-        # sought_item = item_sought_in_inventory.id_item
-        # print(item_sought_in_inventory['item_def'])
-        # man i could NOT get this to work . maybe another day
 
         # finds the recipes in questions that applys
         for name in smelting.recipe_names:
@@ -280,11 +271,9 @@ async def find_recipes_by_item(cmd):
                 if len(uses_sought_item) > 0:
                     response += "This item can be used to smelt *{}*.".format(ewutils.formatNiceList(names=uses_sought_item, conjunction="and"))
 
-
-
     # if the player doesnt specify a 2nd argument
     else:
         response = "Please specify an item you would like to look up usage for."
 
     # send response to player
-    await fe_utils.send_message(cmd.client, cmd.message.channel, fe_utils.formatMessage(cmd.message.author, response))
+    await fe_utils.send_response(response, cmd)

@@ -461,8 +461,10 @@ def make_district_control_board(id_server, title):
 def make_relics_found_board(id_server, title):
     existing_relics = len(static_relic.relic_list)
     relic_count_state = EwGamestate(id_server=id_server, id_state='donated_relics')
-    relic_count_donated = int(relic_count_state.value)
-
+    if relic_count_state.value:
+        relic_count_donated = int(relic_count_state.value)
+    else:
+        relic_count_donated = 0
 
     allrelics = ['TOTAL', existing_relics - 1]
     donatedrelics = ['DONATED', relic_count_donated]
@@ -704,7 +706,7 @@ def board_entry(entry, entry_type, divide_by):
 
     if entry_type == ewcfg.entry_type_player:
         faction = ewutils.get_faction(life_state=entry[1], faction=entry[2])
-        faction_symbol = ewutils.get_faction_symbol(faction, entry[2])
+        faction_symbol = ewutils.get_faction_symbol(faction_role=faction, lifestate=entry[1])
         number = int(entry[3] / divide_by)
 
         if number > 999999999:
@@ -721,7 +723,7 @@ def board_entry(entry, entry_type, divide_by):
     elif entry_type == ewcfg.entry_type_districts:
         faction = entry[0]
         districts = entry[1]
-        faction_symbol = ewutils.get_faction_symbol(faction.lower())
+        faction_symbol = ewutils.get_faction_symbol(faction_role=faction.lower())
 
         result = "\n{} `{:_>15} | {}`".format(
             faction_symbol,

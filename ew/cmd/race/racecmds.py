@@ -473,7 +473,6 @@ async def yiff(cmd):
 
 async def hiss(cmd):
     user_data = EwUser(member=cmd.message.author)
-    response = ""
     if user_data.race == ewcfg.race_scalie:
         response = "*{}* lets out a piercing hiss.\n".format(cmd.message.author.display_name)
         sssss = random.randrange(200, 500) * "s"  # sssssssss

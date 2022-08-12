@@ -49,6 +49,20 @@ tv_lines = [
     "It's time for 'Our Deep Fuck City', where we run documentaries on the mystique of each district. It's time to talk about the disappearing statue of Thalamus J. Crookline that stands in Globule Plaza. You see, Crookline's bandits have developed an inflated sense of honor among themselves. Part of that means they'll often wish themselves luck on that particular statue for good fortune in their pilfering. Every thief knows this, so it's not surprising how often the damn thing gets stolen. Hence the 'disappearance'. It costs the government like 1,000,000 slime a year just to maintain it.",
 ]
 
+meteor_shower_responses = [
+    "♪ Quick, take cover... ♪",
+    "A streak appears across the night sky.",
+    "A splotch flies past the North Star.",
+    "🌠",
+    "☄️",
+    "The horizon is so pretty from here...",
+    "It's a bit chilly from up here, huh?",
+    "The vast expanse of the sky calms your mind.",
+    "You think you see a meteor, but no, just an airplane.",
+    "The cool air fills your lungs.",
+    "So many stars...",
+]
+
 jams_saxophone = ["https://www.youtube.com/watch?v=Z2tvlp7RnlM&ab_channel=rgsmusicargentina", "https://www.youtube.com/watch?v=-yg7aZpIXRI&ab_channel=domtheodore", "https://www.youtube.com/watch?v=9Zyr0IDaRXQ&ab_channel=JohnColtrane-Topic"]
 jams_drums = ["https://www.youtube.com/watch?v=fE6YN9VcPPA&ab_channel=ProphetOfTheMoons", "https://www.youtube.com/watch?v=4D4iSmpT-bI&ab_channel=BuddyRich-Topic", "https://www.youtube.com/watch?v=US7c9ASVfNc&ab_channel=kekecanberk"]
 jams_xylophone = ["https://www.youtube.com/watch?v=QGDXuJlJdec&ab_channel=Klagmar", "https://www.youtube.com/watch?v=-1dSY6ZuXEY&ab_channel=Dr.Blase", "https://www.youtube.com/watch?v=NUBSNWVG55Y&ab_channel=VictorMendoza"]

@@ -3,6 +3,8 @@ import math
 import random
 import time
 
+import discord
+
 from . import core as ewutils
 from . import frontend as fe_utils
 from . import hunting as hunt_utils
@@ -452,8 +454,7 @@ class EwEnemy(EwEnemyBase):
 
                         enemy_data.persist()
                         district_data.persist()
-                        die_resp = target_data.die(
-                            cause=ewcfg.cause_killing_enemy)  # moved after trauma definition so it can gurantee .die knows killer
+                        die_resp = await target_data.die(cause=ewcfg.cause_killing_enemy)  # moved after trauma definition so it can gurantee .die knows killer
                         district_data = EwDistrict(district=district_data.name, id_server=district_data.id_server)
 
                         target_data.persist()
@@ -467,9 +468,6 @@ class EwEnemy(EwEnemyBase):
                         target_data = EwUser(id_user=target_data.id_user, id_server=target_data.id_server, data_level=1)
                     else:
                         # A non-lethal blow!
-                        # apply injury
-                        # if injury_severity > 0:
-                        #	target_data.apply_injury(hitzone.id_injury, injury_severity, enemy_data.id_enemy)
 
                         if used_attacktype != ewcfg.enemy_attacktype_unarmed:
                             if miss:
@@ -747,7 +745,7 @@ class EwEnemy(EwEnemyBase):
         else:
             target_data, group_attack = get_target_by_ai(enemy_data)
 
-        if target_data != None:
+        if target_data:
             target = EwPlayer(id_user=target_data.id_user, id_server=enemy_data.id_server)
             ch_name = poi_static.id_to_poi.get(enemy_data.poi).channel
 
@@ -755,8 +753,7 @@ class EwEnemy(EwEnemyBase):
 
             enemy_data.clear_status(id_status=id_status)
 
-            enemy_data.applyStatus(id_status=id_status, source=enemy_data.id_enemy, id_target=(
-                target_data.id_user if target_data.combatant_type == "player" else target_data.id_enemy))
+            enemy_data.applyStatus(id_status=id_status, source=enemy_data.id_enemy, id_target=(target_data.id_user))
 
             response = "{} focuses on dodging {}'s attacks.".format(enemy_data.display_name, target.display_name)
             resp_cont.add_channel_response(ch_name, response)
@@ -815,7 +812,7 @@ class EwEnemy(EwEnemyBase):
         else:
             target_data, group_attack = get_target_by_ai(enemy_data)
 
-        if target_data != None:
+        if target_data:
             target = EwPlayer(id_user=target_data.id_user, id_server=enemy_data.id_server)
             ch_name = poi_static.id_to_poi.get(enemy_data.poi).channel
 
@@ -823,8 +820,7 @@ class EwEnemy(EwEnemyBase):
 
             enemy_data.clear_status(id_status=id_status)
 
-            enemy_data.applyStatus(id_status=id_status, source=enemy_data.id_enemy, id_target=(
-                target_data.id_user if target_data.combatant_type == "player" else target_data.id_enemy))
+            enemy_data.applyStatus(id_status=id_status, source=enemy_data.id_enemy, id_target=(target_data.id_user))
 
             enemy_data.persist()
 
@@ -854,7 +850,7 @@ def check_defender_targets(user_data, enemy_data):
 """ Damage all players in a district """
 
 
-def explode(damage = 0, district_data = None, market_data = None):
+async def explode(damage = 0, district_data = None, market_data = None):
     id_server = district_data.id_server
     poi = district_data.name
 
@@ -916,9 +912,7 @@ def explode(damage = 0, district_data = None, market_data = None):
             slimes_dropped = user_data.totaldamage + user_data.slimes
 
             user_data.trauma = ewcfg.trauma_id_environment
-            user_data.die(cause=ewcfg.cause_killing)
-            # user_data.change_slimes(n = -slimes_dropped / 10, source = ewcfg.source_ghostification)
-            user_data.persist()
+            await user_data.die(cause=ewcfg.cause_killing, updateRoles=False)
 
             response = "Alas, {} was caught too close to the blast. They are consumed by the flames, and die in the explosion.".format(
                 player_data.display_name)
@@ -1651,7 +1645,6 @@ class EwUser(EwUserBase):
         change = int(n)
         self.slimes += change
 
-
         response = ""
 
         if n >= 0:
@@ -1696,14 +1689,21 @@ class EwUser(EwUserBase):
             if self.life_state != ewcfg.life_state_corpse:
                 response += "You have been empowered by slime and are now a level {} slime{}.".format(new_level, self.gender)
             for level in range(self.slimelevel + 1, new_level + 1):
-                current_mutations = self.get_mutations()
-                if (level >= self.get_mutation_level() + self.get_mutation_next_level()) and (self.life_state not in [ewcfg.life_state_corpse]) and (self.get_mutation_level() < 50):
+                # Get next mutation
+                new_mutation = self.get_mutation_next()
+                new_mutation_obj = static_mutations.mutations_map.get(new_mutation)
+                # If you're over level 50 or there's an error, stop.
+                if new_mutation_obj == None:
+                    continue
+                mutation_level = self.get_mutation_level()
 
-                    new_mutation = self.get_mutation_next()
+                # Check if player can fit the mutation
+                if (level >= mutation_level + new_mutation_obj.tier) and (self.life_state not in [ewcfg.life_state_corpse]) and (mutation_level < 50):
 
                     add_success = self.add_mutation(new_mutation)
+
                     if add_success:
-                        response += "\n\nWhat’s this? You are mutating!! {}".format(static_mutations.mutations_map[new_mutation].str_acquire)
+                        response += "\n\nWhat’s this? You are mutating!! {}".format(new_mutation_obj.str_acquire)
 
             self.slimelevel = new_level
             if self.life_state == ewcfg.life_state_corpse:
@@ -1717,60 +1717,65 @@ class EwUser(EwUserBase):
 
         return bknd_status.applyStatus(self, id_status, value, source, multiplier, id_target)
 
-    def die(self, cause = None):
+    async def die(self, cause=None, updateRoles=True, deathmessage = ""):
 
         time_now = int(time.time())
 
+        # Reset external links ASAP
         ewutils.end_trade(self.id_user)
-
-        resp_cont = EwResponseContainer(id_server=self.id_server)
-
-        client = ewcfg.get_client()
-        server = client.get_guild(self.id_server)
-
-        deathreport = ''
+        ewutils.moves_active[self.id_user] = 0
+        ewutils.active_target_map[self.id_user] = ""
+        ewutils.active_restrictions[self.id_user] = 0
+        ewstats.clear_on_death(id_server=self.id_server, id_user=self.id_user)
 
         # remove ghosts inhabiting player
         self.remove_inhabitation()
 
+        resp_cont = EwResponseContainer(id_server=self.id_server)
+
+        client: discord.Client = ewcfg.get_client()
+        server: discord.Guild = client.get_guild(self.id_server)
+        member: discord.Member = server.get_member(self.id_user)
+
         # Make The death report
-        deathreport = fe_utils.create_death_report(cause=cause, user_data=self)
+        deathreport = fe_utils.create_death_report(cause=cause, user_data=self, deathmessage = deathmessage)
         resp_cont.add_channel_response(ewcfg.channel_sewers, deathreport)
 
         poi = poi_static.id_to_poi.get(self.poi)
         if cause == ewcfg.cause_weather:
             resp_cont.add_channel_response(poi.channel, deathreport)
 
-        status = self.getStatusEffects()
-        if "n1" in status:
-            self.change_slimes(n=-self.slimes, source=ewcfg.source_killing)
-            return (resp_cont)
-
         # Grab necessary data for spontaneous combustion before stat reset
-        explosion_block_list = [ewcfg.cause_leftserver, ewcfg.cause_cliff]
-        user_hasCombustion = False
-        if (cause not in explosion_block_list) and (poi.pvp):
-            if ewcfg.mutation_id_spontaneouscombustion in self.get_mutations():
-                user_hasCombustion = True
-                explode_damage = ewutils.slime_bylevel(self.slimelevel) / 5
-                explode_district = EwDistrict(district=self.poi, id_server=self.id_server)
-                explode_poi_channel = poi_static.id_to_poi.get(self.poi).channel
+        user_has_combustion = False
 
+        # Bust code
         if self.life_state == ewcfg.life_state_corpse:
             self.applyStatus(ewcfg.status_busted_id)
             self.poi = ewcfg.poi_id_thesewers
-        # self.slimes = int(self.slimes * 0.9)
+        # Actual death code
         else:
-            if cause != ewcfg.cause_suicide or self.slimelevel > 10:
-                self.rand_seed = random.randrange(500000)
+            # Only handle mutations for those previously alive
+            mutations = self.get_mutations()
 
-            if ewcfg.mutation_id_rigormortis in self.get_mutations():
+            # Spontaneous Combustion
+            if (cause not in ewcfg.explosion_block_list) and poi.pvp:
+                if ewcfg.mutation_id_spontaneouscombustion in mutations:
+                    user_has_combustion = True
+                    explode_damage = ewutils.slime_bylevel(self.slimelevel) / 5
+                    explode_district = EwDistrict(district=self.poi, id_server=self.id_server)
+                    explode_poi_channel = poi_static.id_to_poi.get(self.poi).channel
+
+            # Rigor Mortis
+            if ewcfg.mutation_id_rigormortis in mutations:
                 rigor = True
             else:
                 rigor = False
 
-            #self.busted = False  # busted is now a status effect, redundant
-            self.weaponmarried = False  # sure hope this works right
+            # Clear and reset user attributes
+            if cause != ewcfg.cause_suicide or self.slimelevel > 10:
+                self.rand_seed = random.randrange(500000)
+
+            self.weaponmarried = False
             self.slimes = 0
             self.slimelevel = 1
             self.clear_mutations()
@@ -1780,13 +1785,20 @@ class EwUser(EwUserBase):
             self.hunger = 0
             self.inebriation = 0
             self.bounty = 0
-            self.time_lastdeath = time_now
 
+            ewutils.weaponskills_clear(id_server=self.id_server, id_user=self.id_user,weaponskill=ewcfg.weaponskill_max_onrevive)
+
+            # Stat processing
             ewstats.increment_stat(user=self, metric=ewcfg.stat_lifetime_deaths)
             ewstats.change_stat(user=self, metric=ewcfg.stat_lifetime_slimeloss, n=self.slimes)
+            if cause == ewcfg.cause_killing_enemy:  # If your killer was an Enemy. Duh.
+                ewstats.increment_stat(user=self, metric=ewcfg.stat_lifetime_pve_deaths)
 
+            # Item processing
             if cause == ewcfg.cause_cliff:
                 pass
+            elif cause == ewcfg.cause_leftserver:
+                bknd_item.item_dropall(self)
             else:
                 if self.life_state == ewcfg.life_state_juvenile:  # If you were a Juvenile.
                     item_fraction = 4
@@ -1799,16 +1811,16 @@ class EwUser(EwUserBase):
                     cosmetic_fraction = 2
 
                 ids_to_drop = []
-
-                ids_to_drop.extend(itm_utils.item_dropsome(id_server=self.id_server, id_user=self.id_user, item_type_filter=ewcfg.it_item, fraction=item_fraction, rigor=rigor))  # Drop a random fraction of your items on the ground.
-
-                ids_to_drop.extend(itm_utils.item_dropsome(id_server=self.id_server, id_user=self.id_user, item_type_filter=ewcfg.it_food, fraction=food_fraction, rigor=rigor))  # Drop a random fraction of your food on the ground.
+                # Drop some of your items
+                ids_to_drop.extend(itm_utils.item_dropsome(id_server=self.id_server, id_user=self.id_user, item_type_filter=ewcfg.it_item, fraction=item_fraction, rigor=rigor))
+                # Drop some of your foods
+                ids_to_drop.extend(itm_utils.item_dropsome(id_server=self.id_server, id_user=self.id_user, item_type_filter=ewcfg.it_food, fraction=food_fraction, rigor=rigor))
+                # Drop some of your weapons
                 ids_to_drop.extend(itm_utils.item_dropsome(id_server=self.id_server, id_user=self.id_user, item_type_filter=ewcfg.it_weapon, fraction=1, rigor=rigor))
-                ids_to_drop.extend(itm_utils.item_dropsome(id_server=self.id_server, id_user=self.id_user, item_type_filter=ewcfg.it_cosmetic, fraction=cosmetic_fraction, rigor=rigor))  # Drop a random fraction of your unadorned cosmetics on the ground.
-                # bknd_item.item_dedorn_cosmetics(id_server=self.id_server, id_user=self.id_user)  # Unadorn all of your adorned hats.
+                # Drop some of your cosmetics
+                ids_to_drop.extend(itm_utils.item_dropsome(id_server=self.id_server, id_user=self.id_user, item_type_filter=ewcfg.it_cosmetic, fraction=cosmetic_fraction, rigor=rigor))
+                # Drop all of your relics
                 ids_to_drop.extend(itm_utils.die_dropall(user_data=self, item_type=ewcfg.it_relic, kill_method=cause))
-
-                ewutils.weaponskills_clear(id_server=self.id_server, id_user=self.id_user, weaponskill=ewcfg.weaponskill_max_onrevive)
 
                 if len(ids_to_drop) > 0:
                     try:
@@ -1823,7 +1835,7 @@ class EwUser(EwUserBase):
                             ))
 
                     except Exception as e:
-                        ewutils.logMsg('Failed to drop items on death, {}.'.format(e))
+                        ewutils.logMsg('User_data.die() failed to drop items on death, {}.'.format(e))
 
                     item_cache = bknd_core.get_cache(obj_type="EwItem")
                     for id in ids_to_drop:
@@ -1831,9 +1843,15 @@ class EwUser(EwUserBase):
                         cache_item.update({'id_owner': self.poi})
                         item_cache.set_entry(data=cache_item)
 
+            self.time_lastdeath = time_now
+            self.life_state = ewcfg.life_state_corpse
+            self.poi_death = self.poi
+            self.poi = ewcfg.poi_id_thesewers
+            self.weapon = -1
+            self.sidearm = -1
+            self.time_expirpvp = 0
+
             try:
-
-
                 item_cache = bknd_core.get_cache(obj_type = "EwItem")
                 if item_cache is not False:
                     tgt_itms = item_cache.find_entries(criteria={"item_props": {"preserved": self.id_user}})
@@ -1851,48 +1869,30 @@ class EwUser(EwUserBase):
                         self.id_user
                     ))
 
-            except:
-                ewutils.logMsg('Failed to remove preserved tags from items.')
+            except Exception as e:
+                ewutils.logMsg(f'Failed to remove preserved tags from items: {e}')
 
-            self.life_state = ewcfg.life_state_corpse
-            self.poi_death = self.poi
-            self.poi = ewcfg.poi_id_thesewers
-            self.weapon = -1
-            self.sidearm = -1
-            self.time_expirpvp = 0
-
-        if cause == ewcfg.cause_killing_enemy:  # If your killer was an Enemy. Duh.
-            ewstats.increment_stat(user=self, metric=ewcfg.stat_lifetime_pve_deaths)
-
-        if cause == ewcfg.cause_leftserver:
-            bknd_item.item_dropall(self)
-
-        # self.sap = 0
-        # self.hardened_sap = 0
-        self.attack = 0
-        self.defense = 0
-        self.speed = 0
-
-        ewutils.moves_active[self.id_user] = 0
-        ewutils.active_target_map[self.id_user] = ""
-        ewutils.active_restrictions[self.id_user] = 0
-        ewstats.clear_on_death(id_server=self.id_server, id_user=self.id_user)
-
+            self.attack = 0
+            self.defense = 0
+            self.speed = 0
+        
         self.persist()
 
-        if cause not in explosion_block_list:  # Run explosion after location/stat reset, to prevent looping onto self
-            if user_hasCombustion:
+        # Run explosion after location/stat reset, to prevent looping onto self
+        if cause not in ewcfg.explosion_block_list:
+            if user_has_combustion:
                 explode_resp = "\n{} spontaneously combusts, horribly dying in a fiery explosion of slime and shrapnel!! Oh, the humanity!\n".format(server.get_member(self.id_user).display_name)
                 resp_cont.add_channel_response(explode_poi_channel, explode_resp)
 
-                explosion = explode(damage=explode_damage, district_data=explode_district)
+                explosion = await explode(damage=explode_damage, district_data=explode_district)
                 resp_cont.add_response_container(explosion)
 
-        # bknd_item.item_destroyall(id_server = self.id_server, id_user = self.id_user)
+        ewutils.logMsg(f'Server {server.name} ({server.id}): {member.name} ({self.id_user}) was killed by {self.id_killer} - cause was {cause}')
+        # You can opt out of the heavy roles update
+        if updateRoles:
+            await ewrolemgr.updateRoles(client, member)
 
-        ewutils.logMsg('server {}: {} was killed by {} - cause was {}'.format(self.id_server, self.id_user, self.id_killer, cause))
-
-        return (resp_cont)
+        return resp_cont
 
     def add_bounty(self, n = 0):
         self.bounty += int(n)
@@ -1951,7 +1951,7 @@ class EwUser(EwUserBase):
                 weaponskill=new_weaponskill
             )
 
-    def eat(self, food_item = None):
+    async def eat(self, food_item = None):
         item_props = food_item.item_props
         mutations = self.get_mutations()
         statuses = self.getStatusEffects()
@@ -1997,7 +1997,6 @@ class EwUser(EwUserBase):
             if ewcfg.slimernalia_active:
                 food_type = static_food.food_map.get(item_props.get("id_food"))
                 if food_type and food_type.acquisition == ewcfg.acquisition_smelting:
-                    print("added bonus festivity")
                     ewstats.change_stat(id_server=self.id_server, id_user=self.id_user, metric=ewcfg.stat_festivity, n=100)
 
             if int(item_props['inebriation']) > 0:
@@ -2010,19 +2009,17 @@ class EwUser(EwUserBase):
                     self.applyStatus(id_status=ewcfg.status_ghostbust_id)
                     # Bust player if they're a ghost
                     if self.life_state == ewcfg.life_state_corpse:
-                        self.die(cause=ewcfg.cause_busted)
+                        await self.die(cause=ewcfg.cause_busted)
                 if item_props['id_food'] in [ewcfg.item_id_seaweedjoint, 'weedurchin']:
                     self.applyStatus(id_status=ewcfg.status_high_id)
                     self.change_crime(n=ewcfg.cr_posession_points)
                 if item_props.get('poisoned') == 'yes' and self.life_state != ewcfg.life_state_corpse:
-                    self.die(cause=ewcfg.cause_poison)
+                    await self.die(cause=ewcfg.cause_poison)
                     response = "Oh, that food was poisoned. Nice one, idiot. Now you're dead."
 
             except:
                 # An exception will occur if there's no id_food prop in the database. We don't care.
                 pass
-
-            #response = item_props['str_eat'] + ("\n\nYou're stuffed!" if self.hunger <= 0 else "")
 
             bknd_item.item_delete(food_item.id_item)
 
@@ -2106,6 +2103,7 @@ class EwUser(EwUserBase):
         result = ""
         current_mutations = self.get_mutations()
 
+        # Level 51 gtfo
         if self.get_mutation_level() >= 50:
             return 0
 
@@ -2126,19 +2124,34 @@ class EwUser(EwUserBase):
                 counter = ids[0]
             if counter == None:
                 counter = 0
+            # The next possible mutations will be the same each level-up until a new mutation is given
             random.seed(counter + seed)
 
             for x in range(1000):
                 result = random.choice(list(static_mutations.mutation_ids))
                 result_mutation = static_mutations.mutations_map[result]
+                incompatible = False
 
-                for mutation in current_mutations:
-                    mutation = static_mutations.mutations_map[mutation]
+                # Retry if player already has the mutation
+                if result in current_mutations:
+                    continue
+                
+                # Retry if the mutation is incompatible with an already-had mutation
+                for mutations in current_mutations:
+                    mutation = static_mutations.mutations_map[mutations]
                     if result in mutation.incompatible:
-                        continue
+                        incompatible = True
+                        break
 
-                if result not in current_mutations and result_mutation.tier + self.get_mutation_level() <= 50:
-                    return result
+                if incompatible:
+                    continue
+
+                # Retry if the mutation would go over the level cap.
+                if result_mutation.tier + self.get_mutation_level() > 50:
+                    continue
+
+                # If it fits all availability criteria, return the mutation
+                return result
 
             result = ""
 

@@ -347,7 +347,7 @@ enemy_attack_type_list = [
     ),
     EwAttackType(  # 16
         id_type="feed",
-        str_crit="**CRUNCH!!!** The {name_enemy} clutches {name_target}'s shouders and takes a bite from their neck! GET IT OFF GET IT OFF GET IT OFF!",
+        str_crit="**CRUNCH!!!** The {name_enemy} clutches {name_target}'s shoulders and takes a bite from their neck! GET IT OFF GET IT OFF GET IT OFF!",
         str_miss="**WHOOSH-SMACK!** You jump out of the way of {name_enemy}'s lunge and kick them away!",
         str_kill="**GULP.** The {name_enemy} swallows you whole! {name_target} can feel a load of stomach acid on their face and then nothing. {emote_skull}",
         str_killdescriptor="eaten alive",
@@ -365,6 +365,15 @@ enemy_attack_type_list = [
         str_damage="{name_target} takes the brunt of {name_enemy}'s stomp!",
         str_groupattack="{name_enemy} tailsweeps a horde of gaiaslimeoids!",
         fn_effect=atf_tusks
+    ),
+    EwAttackType(  # 18
+        id_type="wesson",
+        str_crit="**POW!!** {name_enemy} scores a clean shot! A splatter of {name_target}'s blood sprays onto the ground!",
+        str_miss="**CLICK!** {name_enemy}'s Smith & Wesson jams!",
+        str_kill="**BANG!** The {name_enemy} lands a shot on {name_target}'s forehead, splattering brain matter through the air! {emote_skull}",
+        str_killdescriptor="pumped",
+        str_damage="{name_enemy} lands a potshot on {name_target}!",
+        fn_effect=atf_gunkshot
     ),
 ]
 

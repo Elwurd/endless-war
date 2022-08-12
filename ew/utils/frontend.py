@@ -141,12 +141,12 @@ class EwResponseContainer:
         self.client = ewutils.get_client()
         messages = []
 
-        if self.client == None:
+        if self.client is None:
             ewutils.logMsg("Couldn't find client")
             return messages
 
         server = self.client.get_guild(int(self.id_server))
-        if server == None:
+        if server is None:
             ewutils.logMsg("Couldn't find server with id {}".format(self.id_server))
             return messages
 
@@ -165,29 +165,23 @@ class EwResponseContainer:
                     if len(self.channel_responses[ch][0]) > ewcfg.discord_message_length_limit:
                         response += "\n" + self.channel_responses[ch].pop(0)
                         length = len(response)
-                        #client, channel, text = None, embed = None, delete_after = None, filter_everyone = True
                         split_list = [(response[i:i + 2000]) for i in range(0, length, 2000)]
                         for blurb in split_list:
                             message = await send_message(client = self.client, channel=current_channel, text = blurb, delete_after=delete_after)
-                            messages.append(message)
+                            if message:
+                                messages.append(message)
                         response = ""
                     elif len(response) == 0 or len("{}\n{}".format(response, self.channel_responses[ch][0])) < ewcfg.discord_message_length_limit:
                         response += "\n" + self.channel_responses[ch].pop(0)
                     else:
                         message = await send_message(client = self.client, channel=current_channel, text =response, delete_after=delete_after)
-                        messages.append(message)
+                        if message:
+                            messages.append(message)
                         response = ""
                 message = await send_message(client = self.client, channel=current_channel, text = response, delete_after=delete_after)
                 messages.append(message)
-            except:
-                ewutils.logMsg('Failed to send message to channel {}: {}'.format(ch, self.channel_responses[ch]))
-
-        # for ch in self.channel_topics:
-        # 	channel = get_channel(server = server, channel_name = ch)
-        # 	try:
-        # 		await channel.edit(topic = self.channel_topics[ch])
-        # 	except:
-        # 		ewutils.logMsg('Failed to set channel topic for {} to {}'.format(ch, self.channel_topics[ch]))
+            except Exception as e:
+                ewutils.logMsg('Resp cont failed to send message to channel {}: {}\n{}'.format(ch, self.channel_responses[ch], e))
 
         return messages
 
@@ -232,26 +226,27 @@ def readMessage(fname):
     return msg
 
 
-""" format responses with the username: """
+
 
 
 def formatMessage(user_target, message):
-    # If the display name belongs to an unactivated raid boss, hide its name while it's counting down.
+    """ Format responses with the target's display name, e.g. Dev: You have 69 slime.
+        - user_target needs to be either an EwEnemy or a discord Member/EwPlayer
+    """
 
-    try:
+    if hasattr(user_target, "id_enemy"):
         if user_target.life_state == ewcfg.enemy_lifestate_alive:
-                # Send messages for normal enemies, and allow mentioning with @
-                if user_target.identifier != '':
-                    return "*{} [{}]* {}".format(user_target.display_name, user_target.identifier, message)
-                else:
-                    return "*{}:* {}".format(user_target.display_name, message)
-
-
+            # Send messages for normal enemies, and allow mentioning with @
+            if user_target.identifier != '':
+                return "*{} [{}]* {}".format(user_target.display_name, user_target.identifier, message)
+            else:
+                return "*{}:* {}".format(user_target.display_name, message)
+        # If the display name belongs to an unactivated raid boss, hide its name while it's counting down.
         elif user_target.display_name in ewcfg.raid_boss_names and user_target.life_state == ewcfg.enemy_lifestate_unactivated:
             return "{}".format(message)
 
     # If user_target isn't an enemy, catch the exception.
-    except:
+    else:
         if hasattr(user_target, "id_user") and hasattr(user_target, "id_server"):
             user_obj = EwUser(id_server=user_target.id_server, id_user=user_target.id_user)
         else:
@@ -356,28 +351,37 @@ async def post_in_hideouts(id_server, message):
     )
 
 
-"""
-	Proxy to discord.py channel.send with exception handling.
-"""
+async def send_message(client, channel, text=None, embed=None, delete_after=None, filter_everyone=True):
+    """
+        Proxy to discord.py channel.send with exception handling
+        - channel is a discord Channel
+    """
+    # Handle oversized messages recursively - yes, this is modified from resp_cont
+    if text and len(text) > ewcfg.discord_message_length_limit:
+        length = len(text)
+        split_list = [(text[i:i + 2000]) for i in range(0, length, 2000)]
+        if len(split_list) >= 3:
+            ewutils.logMsg(f"Tried to send oversize message with {len(split_list)} parts - John Discord (rate limit) doesn't like this.")
+        for blurb in split_list:
+            await send_message(client=client, channel=channel, text=blurb, delete_after=delete_after, embed=embed)
+            embed = None
+        return
 
-
-async def send_message(client, channel, text = None, embed = None, delete_after = None, filter_everyone = True):
     # catch any future @everyone exploits
     if filter_everyone and text is not None:
         text = text.replace("@everyone", "{at}everyone")
 
     try:
-        if text is not None:
+        # Whitespace messages will always fail to send, don't clutter the log
+        if text and not text.isspace():
             return await channel.send(content=text, delete_after=delete_after)
         if embed is not None:
             return await channel.send(embed=embed)
     except discord.errors.Forbidden:
         ewutils.logMsg('Could not message user: {}\n{}'.format(channel, text))
         raise
-    except:
-        # Whitespace messages will always fail to send, don't clutter the log
-        if not text.isspace():
-            ewutils.logMsg('frontend send_message Failed to send message to channel: {}\n{}'.format(channel, text))
+    except Exception as e:
+        ewutils.logMsg('Send message failed to send message to channel: {}\n{}: {}'.format(channel, text, e))
 
 
 """ Simpler to use version of send_message that formats message by default """
@@ -387,18 +391,18 @@ async def send_response(response_text, cmd = None, delete_after = None, name = N
     user_data = EwUser(member=cmd.message.author)
     user_mutations = user_data.get_mutations()
 
-    if cmd == None and channel == None:
+    if cmd is None and channel is None:
         raise Exception("No channel to send message to")
 
-    if channel == None:
+    if channel is None:
         channel = cmd.message.channel
 
-    if name == None and cmd != None:
+    if name is None and cmd:
         name = cmd.author_id.display_name
         if ewcfg.mutation_id_amnesia in user_mutations:
             name = '?????'
 
-    if format_name and name != None:
+    if format_name and name:
         response_text = "*{}:* {}".format(name, response_text)
 
     if ewutils.DEBUG:  # to see when the bot uses send_response vs send_message in --debug mode
@@ -415,8 +419,8 @@ async def send_response(response_text, cmd = None, delete_after = None, name = N
     except discord.errors.Forbidden:
         ewutils.logMsg('Could not message user: {}\n{}'.format(channel, response_text))
         raise
-    except:
-        ewutils.logMsg('Failed to send message to channel: {}\n{}'.format(channel, response_text))
+    except Exception as e:
+        ewutils.logMsg('Send response failed to send message to channel: {}\n{}:\n{}'.format(channel, response_text, e))
 
 
 """
@@ -427,8 +431,8 @@ async def send_response(response_text, cmd = None, delete_after = None, name = N
 async def edit_message(client, message, text):
     try:
         return await message.edit(content=str(text))
-    except:
-        ewutils.logMsg('Failed to edit message. Updated text would have been:\n{}'.format(text))
+    except Exception as e:
+        ewutils.logMsg('Failed to edit message. Updated text would have been:\n{}\n{}'.format(text, e))
 
 
 async def delete_last_message(client, last_messages, tick_length):
@@ -443,7 +447,7 @@ async def delete_last_message(client, last_messages, tick_length):
         ewutils.logMsg("failed to delete last message")
 
 
-def create_death_report(cause = None, user_data = None):
+def create_death_report(cause=None, user_data=None, deathmessage = ""):
     client = ewutils.get_client()
     server = client.get_guild(user_data.id_server)
 
@@ -456,10 +460,10 @@ def create_death_report(cause = None, user_data = None):
     deathreport = "{} ".format(ewcfg.emote_slimeskull) + formatMessage(user_player, deathreport)
 
     report_requires_killer = [ewcfg.cause_killing, ewcfg.cause_busted, ewcfg.cause_burning, ewcfg.cause_killing_enemy]
-    if (cause in report_requires_killer):  # Only deal with enemy data if necessary
+    if cause in report_requires_killer:  # Only deal with enemy data if necessary
         killer_isUser = cause in [ewcfg.cause_killing, ewcfg.cause_busted, ewcfg.cause_burning]
         killer_isEnemy = cause in [ewcfg.cause_killing_enemy]
-        if (killer_isUser):  # Generate responses for dying to another player
+        if killer_isUser:  # Generate responses for dying to another player
             # Grab user data
             killer_data = EwUser(id_user=user_data.id_killer, id_server=user_data.id_server)
             player_data = EwPlayer(id_user=user_data.id_killer)
@@ -469,19 +473,19 @@ def create_death_report(cause = None, user_data = None):
 
             killer_nick = player_data.display_name
 
-            if (cause == ewcfg.cause_killing) and (weapon != None):  # Response for dying to another player
+            if (cause == ewcfg.cause_killing) and weapon:  # Response for dying to another player
                 deathreport = "You were {} by {}. {}".format(weapon.str_killdescriptor, killer_nick, ewcfg.emote_slimeskull)
                 deathreport = "{} ".format(ewcfg.emote_slimeskull) + formatMessage(user_player, deathreport)
 
-            if (cause == ewcfg.cause_busted):  # Response for being busted
+            if cause == ewcfg.cause_busted:  # Response for being busted
                 deathreport = "Your ghost has been busted by {}. {}".format(killer_nick, ewcfg.emote_bustin)
                 deathreport = "{} ".format(ewcfg.emote_bustin) + formatMessage(user_player, deathreport)
 
-            if (cause == ewcfg.cause_burning):  # Response for burning to death
+            if cause == ewcfg.cause_burning:  # Response for burning to death
                 deathreport = "You were {} by {}. {}".format(static_weapons.weapon_map.get(ewcfg.weapon_id_molotov).str_killdescriptor, killer_nick, ewcfg.emote_slimeskull)
                 deathreport = "{} ".format(ewcfg.emote_slimeskull) + formatMessage(user_player, deathreport)
 
-        if (killer_isEnemy):  # Generate responses for being killed by enemy
+        if killer_isEnemy:  # Generate responses for being killed by enemy
             # Grab enemy data
             killer_data = EwEnemy(id_enemy=user_data.id_killer, id_server=user_data.id_server)
 
@@ -489,7 +493,7 @@ def create_death_report(cause = None, user_data = None):
                 used_attacktype = hunt_static.attack_type_map.get(killer_data.attacktype)
             else:
                 used_attacktype = ewcfg.enemy_attacktype_unarmed
-            if (cause == ewcfg.cause_killing_enemy):  # Response for dying to enemy attack
+            if cause == ewcfg.cause_killing_enemy:  # Response for dying to enemy attack
                 # Get attack kill description
                 kill_descriptor = "beaten to death"
                 if used_attacktype != ewcfg.enemy_attacktype_unarmed:
@@ -499,49 +503,57 @@ def create_death_report(cause = None, user_data = None):
                 deathreport = "You were {} by {}. {}".format(kill_descriptor, killer_data.display_name, ewcfg.emote_slimeskull)
                 deathreport = "{} ".format(ewcfg.emote_slimeskull) + formatMessage(user_player, deathreport)
 
-    if (cause == ewcfg.cause_donation):  # Response for overdonation
+    if cause == ewcfg.cause_donation:  # Response for overdonation
         deathreport = "{} ".format(ewcfg.emote_slimeskull) + formatMessage(user_player, "You have died in a medical mishap. {}".format(ewcfg.emote_slimeskull))
 
-    if (cause == ewcfg.cause_suicide):  # Response for !suicide
+    if cause == ewcfg.cause_suicide:  # Response for !suicide
         deathreport = "You arrive among the dead by your own volition. {}".format(ewcfg.emote_slimeskull)
         deathreport = "{} ".format(ewcfg.emote_slimeskull) + formatMessage(user_player, deathreport)
 
-    if (cause == ewcfg.cause_drowning):  # Response for disembarking into the slime sea
+    if cause == ewcfg.cause_drowning:  # Response for disembarking into the slime sea
         deathreport = "You have drowned in the slime sea. {}".format(ewcfg.emote_slimeskull)
         deathreport = "{} ".format(ewcfg.emote_slimeskull) + formatMessage(user_player, deathreport)
 
-    if (cause == ewcfg.cause_falling):  # Response for disembarking blimp over the city
+    if cause == ewcfg.cause_falling:  # Response for disembarking blimp over the city
         deathreport = "You have fallen to your death. {}".format(ewcfg.emote_slimeskull)
         deathreport = "{} ".format(ewcfg.emote_slimeskull) + formatMessage(user_player, deathreport)
 
-    if (cause == ewcfg.cause_bleeding):  # Response for bleed death
+    if cause == ewcfg.cause_bleeding:  # Response for bleed death
         deathreport = "{skull} *{uname}*: You have succumbed to your wounds. {skull}".format(skull=ewcfg.emote_slimeskull, uname=user_nick)
 
-    if (cause == ewcfg.cause_weather):  # Response for death by bicarbonate rain
+    if cause == ewcfg.cause_weather:  # Response for death by bicarbonate rain
         deathreport = "{skull} *{uname}*: You have been cleansed by the bicarbonate rain. {skull}".format(skull=ewcfg.emote_slimeskull, uname=user_nick)
 
-    if (cause == ewcfg.cause_cliff):  # Response for falling or being pushed off cliff
+    if cause == ewcfg.cause_cliff:  # Response for falling or being pushed off cliff
         deathreport = "You fell off a cliff. {}".format(ewcfg.emote_slimeskull)
         deathreport = "{} ".format(ewcfg.emote_slimeskull) + formatMessage(user_player, deathreport)
 
-    if (cause == ewcfg.cause_backfire):  # Response for death by self backfire
+    if cause == ewcfg.cause_backfire:  # Response for death by self backfire
         weapon_item = EwItem(id_item=user_data.weapon)
         weapon = static_weapons.weapon_map.get(weapon_item.item_props.get("weapon_type"))
         deathreport = "{} killed themselves with their own {}. Dumbass.".format(user_nick, weapon.str_name)
 
-    if (cause == ewcfg.cause_praying):  # Response for praying
+    if cause == ewcfg.cause_praying:  # Response for praying
         deathreport = formatMessage(user_member, "{} owww yer frickin bones man {}".format(ewcfg.emote_slimeskull, ewcfg.emote_slimeskull))
 
-    if (cause == ewcfg.cause_poison):  # Response for praying
+    if cause == ewcfg.cause_poison:  # Response for praying
         deathreport = formatMessage(user_member, "{} couldn't stop guzzling poison. {}".format(user_nick, ewcfg.emote_slimeskull))
     
-    if (cause == ewcfg.cause_crushing): # Response for crushing a negapoudrin/negaslimeoid core
+    if cause == ewcfg.cause_crushing: # Response for crushing a negapoudrin/negaslimeoid core
         deathreport = "You bit into **NEGASLIME**, dink. Fucking idiot. {}".format(ewcfg.emote_slimeskull)
         deathreport = "{} ".format(ewcfg.emote_slimeskull) + formatMessage(user_player, deathreport)
 
-    if (cause == ewcfg.cause_gay): # Response for being gay in July
+    if cause == ewcfg.cause_gay: # Response for being gay in July
         deathreport = "https://cdn.discordapp.com/attachments/431240644464214017/982634916854497321/unknown.png"
         deathreport = formatMessage(user_player, deathreport)
+
+    if (cause == ewcfg.cause_debris):  # Response for being hit by poudrin hail
+        deathreport = "Your head was smushed in by falling debris. {}".format(ewcfg.emote_slimeskull)
+        deathreport = "{} ".format(ewcfg.emote_slimeskull) + formatMessage(user_player, deathreport)
+
+    if deathmessage != "":
+        deathreport = "{} {}".format(deathmessage, ewcfg.emote_slimeskull)
+        deathreport = "{} ".format(ewcfg.emote_slimeskull) + formatMessage(user_player, deathreport)
 
     return (deathreport)
 

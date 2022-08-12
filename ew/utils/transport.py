@@ -65,8 +65,8 @@ class EwTransport(EwTransportBase):
                     try:
                         await message.delete()
                         pass
-                    except:
-                        ewutils.logMsg("Failed to delete message while moving transport {}.".format(transport_line.str_name))
+                    except Exception as e:
+                        ewutils.logMsg("Failed to delete message while moving transport {}: {}".format(transport_line.str_name, e))
                 # Switch to the next stop
                 self.current_stop = schedule[1]
                 self.persist()
@@ -75,10 +75,6 @@ class EwTransport(EwTransportBase):
                 stop_data = poi_static.id_to_poi.get(self.current_stop)
 
                 # announce new stop inside the transport
-                # if stop_data.is_subzone:
-                # 	stop_mother = poi_static.id_to_poi.get(stop_data.mother_district)
-                # 	response = "We have reached {}.".format(stop_mother.str_name)
-                # else:
                 response = "We have reached {}.".format(stop_data.str_name)
 
                 # Initialize next_line in this scope
@@ -96,12 +92,9 @@ class EwTransport(EwTransportBase):
                     # Otherwise announce next stop, if usable
                     next_stop = poi_static.id_to_poi.get(transport_line.schedule.get(stop_data.id_poi)[1])
                     if next_stop.is_transport_stop:
-                        # if next_stop.is_subzone:
-                        # 	stop_mother = poi_static.id_to_poi.get(next_stop.mother_district)
-                        # 	response += " The next stop is {}.".format(stop_mother.str_name)
-                        # else:
                         response += " The next stop is {}.".format(next_stop.str_name)
                 resp_cont.add_channel_response(poi_data.channel, response)
+
 
                 # announce transport has arrived at the stop
                 if stop_data.is_transport_stop:

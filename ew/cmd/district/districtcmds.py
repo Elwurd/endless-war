@@ -247,7 +247,7 @@ async def beam_me_up(cmd):
     for cosmetic in cosmetics:
         cosmetic_data = EwItem(id_item=cosmetic.get('id_item'))
 
-        print(cosmetic_data.item_props)
+        ewutils.logMsg(str(cosmetic_data.item_props))
         if cosmetic_data.item_props.get('id_cosmetic') == 'skinsuit':
             if cosmetic_data.item_props.get('adorned') == 'true':
                 protected = True

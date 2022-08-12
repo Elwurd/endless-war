@@ -36,8 +36,6 @@ class EwUserBase:
     arrested = 0
     active_slimeoid = -1
     splattered_slimes = 0
-    # sap = 0
-    # hardened_sap = 0
     race = ""
 
     # SLIMERNALIA
@@ -82,7 +80,6 @@ class EwUserBase:
 
     # twitter
     verified = False
-
 
     hogtied = 0
 

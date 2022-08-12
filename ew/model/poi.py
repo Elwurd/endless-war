@@ -146,8 +146,6 @@ class EwPoi:
             coord_alias = [],
             channel = "",
             role = None,
-            major_role = None,
-            minor_role = None,
             permissions = None,
             pvp = True,
             factions = [],
@@ -277,18 +275,38 @@ class EwTransportLine:
 class EwEventDef:
     event_type = ""
 
+    str_name = ""
+    pois = []
+
+    length = 0
+    buffer = 0
+
     str_event_start = ""
+    str_event_ongoing = ""
     str_event_end = ""
+    str_check_text = ""
 
     def __init__(
             self,
             event_type = "",
+            str_name = "",
+            pois = [],
+            length = 0,
+            buffer = 0,
             str_event_start = "",
+            str_event_ongoing = "",
             str_event_end = "",
+            str_check_text = "",
     ):
         self.event_type = event_type
+        self.str_name = str_name
+        self.pois = pois
+        self.length = length
+        self.buffer = buffer
         self.str_event_start = str_event_start
+        self.str_event_ongoing = str_event_ongoing
         self.str_event_end = str_event_end
+        self.str_check_text = str_check_text
 
 
 class EwDungeonScene:

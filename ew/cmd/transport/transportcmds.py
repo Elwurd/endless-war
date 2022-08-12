@@ -186,16 +186,13 @@ async def disembark(cmd):
                 return await fe_utils.send_message(cmd.client, cmd.message.channel, response)
             user_data.poi = ewcfg.poi_id_slimesea
             user_data.trauma = ewcfg.trauma_id_environment
-            die_resp = user_data.die(cause=ewcfg.cause_drowning)
-            user_data.persist()
+            die_resp = await user_data.die(cause=ewcfg.cause_drowning)
             resp_cont.add_response_container(die_resp)
 
             response = "{} jumps over the railing of the ferry and promptly drowns in the slime sea.".format(cmd.message.author.display_name)
             resp_cont.add_channel_response(channel=ewcfg.channel_slimesea, response=response)
             resp_cont.add_channel_response(channel=ewcfg.channel_ferry, response=response)
-            await ewrolemgr.updateRoles(client=cmd.client, member=cmd.message.author)
         # they also can't fly
-
         elif transport_data.transport_type == ewcfg.transport_type_blimp and not stop_poi.is_transport_stop and user_data.life_state != ewcfg.life_state_corpse:
             user_mutations = user_data.get_mutations()
             if user_data.life_state == ewcfg.life_state_kingpin:
@@ -221,12 +218,10 @@ async def disembark(cmd):
             district_data.persist()
             user_data.poi = stop_poi.id_poi
             user_data.trauma = ewcfg.trauma_id_environment
-            die_resp = user_data.die(cause=ewcfg.cause_falling)
-            user_data.persist()
+            die_resp = await user_data.die(cause=ewcfg.cause_falling)
             resp_cont.add_response_container(die_resp)
             response = "SPLAT! A body collides with the asphalt with such force, that it is utterly annihilated, covering bystanders in blood and slime and guts."
             resp_cont.add_channel_response(channel=stop_poi.channel, response=response)
-            await ewrolemgr.updateRoles(client=cmd.client, member=cmd.message.author)
 
         # update user location, if move successful
         else:

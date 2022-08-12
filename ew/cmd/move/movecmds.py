@@ -12,7 +12,7 @@ from ew.backend.dungeons import EwGamestate
 from ew.backend.market import EwMarket
 from ew.backend.mutation import EwMutation
 from ew.backend.player import EwPlayer
-from ew.backend.worldevent import get_void_connection_pois
+from ew.backend import worldevent as bknd_worldevent
 from ew.cmd import apt as ewapt
 from ew.static import cfg as ewcfg
 from ew.static import poi as poi_static
@@ -43,6 +43,7 @@ from .moveutils import get_players_look_resp
 from .moveutils import get_slimes_resp
 from .moveutils import get_items_resp
 from .moveutils import get_void_connections_resp
+from .moveutils import get_world_events_look_resp
 from .moveutils import one_eye_dm
 from .moveutils import send_arrival_response
 
@@ -301,7 +302,7 @@ async def move(cmd = None, isApt = False, isSplit = 0, continuousMove = -1):
 
             return
 
-        rutils.movement_checker(user_data, poi_current, poi)
+        await rutils.movement_checker(user_data, poi_current, poi, cmd=cmd)
 
         await ewrolemgr.updateRoles(client=client, member=member_object, new_poi=poi.id_poi)
         user_data.poi = poi.id_poi
@@ -414,12 +415,13 @@ async def move(cmd = None, isApt = False, isSplit = 0, continuousMove = -1):
 
                 if user_data.poi != poi_current.id_poi:
                     if walking_into_sewers and poi_current.id_poi == ewcfg.poi_id_thesewers:
-                        user_data.die(cause=ewcfg.cause_suicide)
+                        die_resp = await user_data.die(cause=ewcfg.cause_suicide)
+                        return await die_resp.post()
 
                     poi_previous = poi_static.id_to_poi.get(user_data.poi)
                     # print('previous poi: {}'.format(poi_previous))
 
-                    rutils.movement_checker(user_data, poi_previous, poi_current)
+                    await rutils.movement_checker(user_data, poi_previous, poi_current, cmd)
 
                     user_data.poi = poi_current.id_poi
                     user_data.time_lastenter = int(time.time())
@@ -439,14 +441,6 @@ async def move(cmd = None, isApt = False, isSplit = 0, continuousMove = -1):
                         pass
                     except:
                         pass
-
-                    # msg_walk_start = await fe_utils.send_message(cmd.client,
-                    #	channel,
-                    #	fe_utils.formatMessage(
-                    #		cmd.message.author,
-                    #		"You {} {}.".format(poi_current.str_enter, poi_current.str_name)
-                    #	)
-                    # )
 
                     msg_walk_start = await send_arrival_response(cmd, poi_current, channel)
 
@@ -488,7 +482,7 @@ async def dm_move(cmd):
 
 async def descend(cmd):
     user_data = EwUser(member=cmd.message.author, data_level=1)
-    void_connections = get_void_connection_pois(cmd.guild.id)
+    void_connections = bknd_worldevent.get_void_connection_pois(cmd.guild.id)
 
     # enter the void
     if user_data.poi in void_connections:
@@ -592,6 +586,7 @@ async def look(cmd):
     items_resp = get_items_resp(user_data, district_data)
     players_resp = get_players_look_resp(user_data, district_data)
     enemies_resp = get_enemies_look_resp(user_data, district_data)
+    worldevents_resp = get_world_events_look_resp(user_data, district_data)
     soul_resp = ""
     extra_resp = ""
 
@@ -641,12 +636,13 @@ async def look(cmd):
 
         await fe_utils.send_message(cmd.client, cmd.message.channel, fe_utils.formatMessage(
             cmd.message.author,
-            "{}{}{}{}{}{}{}{}{}".format(
+            "{}{}{}{}{}{}{}{}{}{}".format(
                 capped_resp,
                 slimes_resp,
                 items_resp,
                 players_resp,
                 enemies_resp,
+                worldevents_resp,
                 soul_resp,
                 extra_resp,
                 ("\n\n{}".format(
@@ -680,6 +676,7 @@ async def survey(cmd):
     items_resp = get_items_resp(user_data, district_data)
     players_resp = get_players_look_resp(user_data, district_data)
     enemies_resp = get_enemies_look_resp(user_data, district_data)
+    worldevents_resp = get_world_events_look_resp(user_data, district_data)
 
     if poi.is_apartment:
         slimes_resp = ""
@@ -698,6 +695,7 @@ async def survey(cmd):
                 items_resp,
                 players_resp,
                 enemies_resp,
+                worldevents_resp,
                 ("\n\n{}".format(
                     ewutils.weather_txt(market_data)
                 ) if cmd.guild != None else "")
@@ -756,6 +754,29 @@ async def scout(cmd):
         if (not is_neighbor) and (not is_current_transport_station) and (not is_transport_at_station) and (not poi.id_poi == user_poi.id_poi) and (not user_data.poi in poi.mother_districts) and (not poi.id_poi in user_poi.mother_districts):
             response = "You can't scout that far."
             return await fe_utils.send_message(cmd.client, cmd.message.channel, fe_utils.formatMessage(cmd.message.author, response))
+
+        world_events_resp = ""
+        world_events = bknd_worldevent.get_world_events(id_server=user_data.id_server, active_only=True)
+        # For all presently-happening world events
+        for id_event in world_events:
+            # If the world event is a smog warning
+            if world_events.get(id_event) in [ewcfg.event_type_smog_warning]:
+                # Get the EVENT DATA
+                event_data = bknd_worldevent.EwWorldEvent(id_event=id_event)
+                smog_poi = event_data.event_props.get('poi')
+
+                # If you're in the smog district or scouting it
+                if user_data.poi == smog_poi or poi.id_poi == smog_poi:
+                    response = "You !sputter and !cough due to the noxious smog."
+                    return await fe_utils.send_message(cmd.client, cmd.message.channel, fe_utils.formatMessage(cmd.message.author, response))
+            # If there's a world event in the scouted district, give corresponding flavor text
+            elif world_events.get(id_event) in ewcfg.poi_events:
+                event_data = bknd_worldevent.EwWorldEvent(id_event=id_event)
+
+                if poi.id_poi == event_data.event_props.get('poi'):
+                    event_def = poi_static.event_type_to_def.get(event_data.event_type)
+                    # Just in case there's more than 1 somehow
+                    world_events_resp += event_def.str_event_ongoing + "\n"
 
         district_data = EwDistrict(district=poi.id_poi, id_server=user_data.id_server)
 
@@ -865,10 +886,11 @@ async def scout(cmd):
         # post result to channel
         await fe_utils.send_message(cmd.client, cmd.message.channel, fe_utils.formatMessage(
             cmd.message.author,
-            "**{}**:{}\n{}\n{}".format(
+            "**{}**:{}\n{}\n{}{}".format(
                 poi.str_name,
                 players_resp,
                 enemies_resp,
+                world_events_resp,
                 threats_resp,
             )
         ))
@@ -984,10 +1006,11 @@ async def teleport(cmd):
 
             ewutils.moves_active[cmd.message.author.id] = 0
 
-            rutils.movement_checker(user_data, poi_static.id_to_poi.get(user_data.poi), poi)
+            await rutils.movement_checker(user_data, poi_static.id_to_poi.get(user_data.poi), poi, cmd)
 
             if poi.id_poi == ewcfg.poi_id_thesewers:
-                user_data.die(cause=ewcfg.cause_suicide)
+                die_resp = await user_data.die(cause=ewcfg.cause_suicide)
+                return await die_resp.post()
 
             await ewrolemgr.updateRoles(client=cmd.client, member=cmd.message.author, new_poi=poi.id_poi)
             user_data.poi = poi.id_poi

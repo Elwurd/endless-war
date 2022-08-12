@@ -411,11 +411,8 @@ def item_create(
 """
 
 
-def item_dropall(
-        user_data
-):
+def item_dropall(user_data):
     try:
-
         bknd_core.execute_sql_query(
             "UPDATE items SET id_user = %s WHERE id_user = %s AND id_server = %s AND soulbound = 0", (
                 user_data.poi,
@@ -433,8 +430,8 @@ def item_dropall(
                 item_data.update({"id_owner": user_data.poi})
                 item_cache.set_entry(item_data)
 
-    except:
-        ewutils.logMsg('Failed to drop items for user with id {}'.format(user_data.id_user))
+    except Exception as e:
+        ewutils.logMsg('Failed to drop items for user with id {}: {}'.format(user_data.id_user, e))
 
 
 

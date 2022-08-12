@@ -446,7 +446,7 @@ async def order(cmd):
                             else:
                                 response = "You slam {:,} {} down on the counter at {} for {} and give it to {}.".format(value, currency_used, current_vendor, name, target_player_data.display_name)
 
-                            response += "\n\n*{}*: ".format(target_player_data.display_name) + target_data.eat(item_data)
+                            response += "\n\n*{}*: ".format(target_player_data.display_name) + await target_data.eat(item_data)
                             target_data.persist()
                             
                         else:
@@ -458,7 +458,7 @@ async def order(cmd):
 
                             user_player_data = EwPlayer(id_user=user_data.id_user)
 
-                            response += "\n\n*{}*: ".format(user_player_data.display_name) + user_data.eat(item_data)
+                            response += "\n\n*{}*: ".format(user_player_data.display_name) + await user_data.eat(item_data)
                             user_data.persist()
 
                     if premium_purchase:
@@ -505,7 +505,7 @@ async def eat_item(cmd):
                 break
 
     if food_item != None:
-        response = user_data.eat(food_item)
+        response = await user_data.eat(food_item)
         user_data.persist()
     else:
         if item_search:

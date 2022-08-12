@@ -635,6 +635,17 @@ item_list = [
         vendors=[ewcfg.vendor_bazaar]
     ),
     EwGeneralItem(
+        id_item=ewcfg.item_id_moon_dust_pod,
+        alias = [
+            "moondust",
+            "moonpod",
+            "moondustjuice",
+        ],
+        str_name="Moon Dust Vape Pod",
+        str_desc="A moon dust-flavored vape pod. You don't know what flavor \"Moon Dust\" is but geez, this one sure is addictive. It could be made out of fiberglass and you wouldn't care.",
+        context = "vapepod",
+    ),
+    EwGeneralItem(
         id_item=ewcfg.item_id_gameguide,
         alias=[
             "gg",
@@ -1964,8 +1975,11 @@ prank_items_heinous = []  # common
 prank_items_scandalous = []  # uncommon
 prank_items_forbidden = []  # rare
 
+prank_items_instantuse = []  # instant use items
+prank_items_response = []  # response items
+prank_items_trap = []  # traps
 
-# Gather all prank items
+# Gather all prank items based on rarity
 for p in item_list:
     if p.context == ewcfg.context_prankitem and p.rarity == ewcfg.prank_rarity_heinous:
         prank_items_heinous.append(p)
@@ -1979,6 +1993,22 @@ for p in item_list:
 for p in item_list:
     if p.context == ewcfg.context_prankitem and p.rarity == ewcfg.prank_rarity_forbidden:
         prank_items_forbidden.append(p)
+    else:
+        pass
+# Gather all prank items based on type
+for p in item_list:
+    if p.context == ewcfg.context_prankitem and p.prank_type == ewcfg.prank_type_instantuse:
+        prank_items_instantuse.append(p)
+    else:
+        pass
+for p in item_list:
+    if p.context == ewcfg.context_prankitem and p.prank_type == ewcfg.prank_type_response:
+        prank_items_response.append(p)
+    else:
+        pass
+for p in item_list:
+    if p.context == ewcfg.context_prankitem and p.prank_type == ewcfg.prank_type_trap:
+        prank_items_trap.append(p)
     else:
         pass
 

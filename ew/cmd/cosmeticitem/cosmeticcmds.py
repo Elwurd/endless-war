@@ -825,11 +825,11 @@ async def balance_cosmetics(cmd):
                     ewutils.logMsg('Balanced cosmetic: {}'.format(id_item))
 
         except KeyError as k:
-            ewutils.logMsg("Key error: " + k)
-            return await fe_utils.send_message(cmd.client, cmd.message.channel, fe_utils.formatMessage(cmd.message.author, "Failure."))
+            ewutils.logMsg("Key error: " + str(k))
+            return await fe_utils.send_response("Failure.", cmd)
 
         except Exception as e:
             ewutils.logMsg(e)
-            return await fe_utils.send_message(cmd.client, cmd.message.channel, fe_utils.formatMessage(cmd.message.author, "Failure."))
+            return await fe_utils.send_response("Failure.", cmd)
 
-    return await fe_utils.send_message(cmd.client, cmd.message.channel, fe_utils.formatMessage(cmd.message.author, "Success!"))
+    return await fe_utils.send_response("Success!", cmd)

@@ -227,7 +227,6 @@ class EwSlimeoidCombatData:
             while self.moxie > 1 and to_subtract > 0:
                 self.moxie -= 1
                 to_subtract -= 1
-                print(to_subtract)
             # if moxie hits 1 (0 moxie), add the leftover to_subtract back to oversize
             to_subtract += oversize
 
