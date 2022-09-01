@@ -1769,11 +1769,11 @@ class EwUser(EwUserBase):
                 rigor = True
             else:
                 rigor = False
-            # Ambidextrous
-            if ewcfg.mutation_id_ambidextrous in mutations:
-                ambidextrous = True
+            # Lovehandles
+            if ewcfg.mutation_id_lovehandles in mutations:
+                lovehandles = True
             else:
-                ambidextrous = False
+                lovehandles = False
                 
             # Clear and reset user attributes
             if cause != ewcfg.cause_suicide or self.slimelevel > 10:
@@ -1814,13 +1814,13 @@ class EwUser(EwUserBase):
 
                 ids_to_drop = []
                 # Drop some of your items
-                ids_to_drop.extend(itm_utils.item_dropsome(id_server=self.id_server, id_user=self.id_user, item_type_filter=ewcfg.it_item, fraction=item_fraction, rigor=rigor, ambidextrous=ambidextrous))
+                ids_to_drop.extend(itm_utils.item_dropsome(id_server=self.id_server, id_user=self.id_user, item_type_filter=ewcfg.it_item, fraction=item_fraction, rigor=rigor, lovehandles=lovehandles))
                 # Drop some of your foods
-                ids_to_drop.extend(itm_utils.item_dropsome(id_server=self.id_server, id_user=self.id_user, item_type_filter=ewcfg.it_food, fraction=food_fraction, rigor=rigor, ambidextrous=ambidextrous))
+                ids_to_drop.extend(itm_utils.item_dropsome(id_server=self.id_server, id_user=self.id_user, item_type_filter=ewcfg.it_food, fraction=food_fraction, rigor=rigor, lovehandles=lovehandles))
                 # Drop some of your weapons
-                ids_to_drop.extend(itm_utils.item_dropsome(id_server=self.id_server, id_user=self.id_user, item_type_filter=ewcfg.it_weapon, fraction=1, rigor=rigor, ambidextrous=ambidextrous))
+                ids_to_drop.extend(itm_utils.item_dropsome(id_server=self.id_server, id_user=self.id_user, item_type_filter=ewcfg.it_weapon, fraction=1, rigor=rigor, lovehandles=lovehandles))
                 # Drop some of your cosmetics
-                ids_to_drop.extend(itm_utils.item_dropsome(id_server=self.id_server, id_user=self.id_user, item_type_filter=ewcfg.it_cosmetic, fraction=cosmetic_fraction, rigor=rigor, ambidextrous=ambidextrous))
+                ids_to_drop.extend(itm_utils.item_dropsome(id_server=self.id_server, id_user=self.id_user, item_type_filter=ewcfg.it_cosmetic, fraction=cosmetic_fraction, rigor=rigor, lovehandles=lovehandles))
                 # Drop all of your relics
                 ids_to_drop.extend(itm_utils.die_dropall(user_data=self, item_type=ewcfg.it_relic, kill_method=cause))
 
@@ -2488,8 +2488,8 @@ class EwUser(EwUserBase):
         return res
 
     # Returns EwItem of the weapon they would use in combat
-    def get_weapon_item(self):
-        mutations = self.get_mutations()
+    def get_weapon_item(self, mutations):
+        #mutations = self.get_mutations()
         ambi = ewcfg.mutation_id_ambidextrous in mutations
         if self.weapon > 0:
             wep_item = EwItem(id_item=self.weapon)
@@ -2511,6 +2511,21 @@ class EwUser(EwUserBase):
             self.weaponskill = 5
 
         return returned_weapon
+    
+    def get_tool_item(self, mutations, tool_wanted):
+        ambi = ewcfg.mutation_id_ambidextrous in mutations
+        if self.weapon > 0:
+            tool_item = EwItem(id_item=self.weapon)
+            tool_def = static_weapons.weapon_map.get(tool_item.template)
+            if tool_def.id_weapon in tool_wanted:
+                return tool_item
+        if ambi and self.sidearm > 0:
+            tool_item = EwItem(id_item=self.sidearm)
+            tool_def = static_weapons.weapon_map.get(tool_item.template)
+            if tool_def.id_weapon in tool_wanted:
+                return tool_item
+        else:
+            return False
 
     def change_crime(self, n=0):
         self.crime += n

@@ -645,6 +645,26 @@ mutations = [
         },
         str_transplant="Dr. Dusttrap pulls out a sawblade. \"I ran out of anesthesia a little bit ago, so you'll have to stay awake for this one.\" Turning it on, she saws your legs off. Ouch! She then stabs poles into them, stretching them to over 2x their original length. With some bandages, she reattaches them to your bloody midsection. \n\nYou have developed the mutation **Stiltwalker**. You can !jump. Like, for **REAL** dude. You can reach the blimp from the ground and the mines from the Waffle House.",
     ),
+    EwMutationFlavor(
+        id_mutation=ewcfg.mutation_id_lovehandles,
+        str_name="Love Handles",
+        alias=['lh', 'love', 'handles'],
+        str_describe_self="You have trouble uncurling your fingers due to **Love Handles**.",
+        str_describe_other="They have trouble uncurling their fingers due to **Love Handles**.",
+        str_acquire="You feel faint and take a knee. Your eyes closed, you reminisce the regrets of all your past relationships, the fun you had and what you could've done better if you'd known. You open your eyes and notice your hands mutating -they quiver madly as a white ring under the skin of your wrists stretches out across the back of your hand and curls around your fingers. They coil over finger tendons and constrict until they snap them offthe bone entirely, and they churn your hand muscles into red pulp which leaks out of your heavily stretched-out skin. You feel no pain, you feel good. You feel like you've killed something you no longer need. Your hands grip faster than your eyes can follow and take forever to uncurl, each time you do it you feel your bulk of nerves stretch; 1000 nerves snap and 1001 grow back stronger. As you put your hands over the handle of your weapon, you feel like you'll never let go again. Weapons with 7 or more mastery don't drop on death, and divorcing married weapons doesn't delete them. You may love again.",
+        tier=2,
+        str_transplant="Dr. Dusttrap fetches a jar full of leeches and feeds them into your wrist over and over until both hands are inflated into the size of a football. \"You better not be immune to acid, whatever your people are supposed to be.\" She pours acid all over your hand, melting off the skin, muscle, and eels alike, leaving only bone and eel nerves larping themselves into the shape of a hand. Unlike mutating it naturally, developing **Love Handles** this way was excruciating. You have developed the mutation **Love Handles**. You won't drop weapons with 7 or more mastery on death, and divorcing married weapons doesn't delete them.",
+    ),
+    EwMutationFlavor(
+        id_mutation=ewcfg.mutation_id_muckbangbrah,
+        str_name="Muck-Bang-Brah",
+        alias=['mbb', 'muck-bang-brah', 'muckbang', 'reviewbrah', 'review brah', 'reportoftheweek', 'report of the week', 'I LOVE REVIEW BRAH', 'RUNNINGONEMPTYFOOODREVIEW', 'ENERGYCRISIS'],
+        str_describe_self="You look like a school shooter that missed their chance due to **Muck-Bang-Brah**",
+        str_describe_other="They look like a school shooter that missed their chance due to **Muck-Bang-Brah**",
+        str_acquire="You stop nail biting. You stop checking your phone. You delete your endless war discord account. You stop buying new clothes. You stop hanging out with your friends. You stop calling your parents. You stop eating regularly. You stop sleeping well. You stop going to your job.\n\nYou have a new Job. You break the window of the nearest car and hotwire the engine. You put your gellphone on the carshield ready to record. You put on your suit. You're running on empty, food review, and you're no longer eating. You're performing.\n\nOrder food togo, eat it in the same place you bought it.\nTake energy drinks to your apartment, drink them at night time.\nYou do it for the glory. And to fund your niche hobby of shortwave radio.",
+        tier=4,
+        str_transplant="She walks into the other room and comes back with a multitude of VR headsets to try the fit of each one. The one indicating the smallest skull size fits and you're transported to a place beyond imagination -the car of your god, your idol, your heart's desire Review Brah. You feel glorious feeling what he feels, seeing what he sees. His suit fits like new comfy socks. This is where it is, this is your place in life. This is what the world has in store. When the headset comes off, she hands you a sign up form for the NLACakaNM food reviewer community. 4/10 too dry.",
+    ),
 ]
 
 # PRESENT DAY

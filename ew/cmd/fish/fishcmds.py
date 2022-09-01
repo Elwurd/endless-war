@@ -6,6 +6,7 @@ from ew.backend import item as bknd_item
 from ew.backend import worldevent as bknd_worldevent
 from ew.backend.fish import EwOffer
 from ew.backend.item import EwItem
+from ew.backend.item import get_weaponskill
 from ew.backend.market import EwMarket
 from ew.backend.dungeons import EwGamestate
 from ew.static import cfg as ewcfg
@@ -43,6 +44,7 @@ async def cast(cmd):
     has_reeled = False
     user_data = EwUser(member=cmd.message.author)
     mutations = user_data.get_mutations()
+    ambi = ewcfg.mutation_id_ambidextrous in mutations
 
     # Can only fish in the pier's channel
     if ewutils.channel_name_is_poi(cmd.message.channel.name) == False:
@@ -81,13 +83,10 @@ async def cast(cmd):
             response = "You cast your fishing line into the pond, but your hook bounces off its black waters like hard concrete."
         else:
             has_fishingrod = False
-
             # Check for if the user is holding a fishingrod or high, for their corresponding effects later.
-            if user_data.weapon >= 0:
-                weapon_item = EwItem(id_item=user_data.weapon)
-                weapon = static_weapons.weapon_map.get(weapon_item.item_props.get("weapon_type"))
-                if weapon.id_weapon == "fishingrod":
-                    has_fishingrod = True
+            fishingrod = EwUser.get_tool_item(user_data, mutations, ["fishingrod"])
+            if(fishingrod):
+                has_fishingrod = True
 
             if ewcfg.status_high_id in statuses:
                 fisher.high = True
@@ -183,7 +182,7 @@ async def cast(cmd):
 
                 # If user has a fishing rod, take their mastery (10 at max !anoint) minus 4.
                 if has_fishingrod:
-                    mastery_bonus += user_data.weaponskill - 4 #
+                    mastery_bonus += get_weaponskill(user_data, weapon_type="fishingrod") -4
                 # If user doesn't have a fishing rod, mastery_bonus is -4.
                 else:
                     mastery_bonus += -4
@@ -191,7 +190,7 @@ async def cast(cmd):
                 # If ghost fishing, mastery_bonus is boosted by 1.
                 if rod_possession:
                     mastery_bonus += 1
-
+                print(has_fishingrod, mastery_bonus)
                 # If mastery_bonus is below 0, make it 0.
                 mastery_bonus = max(0, mastery_bonus)
 

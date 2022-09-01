@@ -1380,21 +1380,32 @@ def get_freshness(user_data, adorned_id_list = None):
     return int(base_freshness * hue_mod * style_mod) + bonus_freshness
 
 
-def get_weaponskill(user_data):
+def get_weaponskill(user_data, weapon_type=False):
     # Get the skill for the user's current weapon.
-    if user_data.weapon != None and user_data.weapon >= 0:
-        skills = ewutils.weaponskills_get(
-            id_server=user_data.id_server,
-            id_user=user_data.id_user
-        )
+    if not weapon_type:
+        if user_data.weapon != None and user_data.weapon >= 0:
+            skills = ewutils.weaponskills_get(
+                id_server=user_data.id_server,
+                id_user=user_data.id_user
+            )
 
-        weaponskill = 0
-        weapon_item = EwItem(id_item=user_data.weapon)
-        if weapon_item.item_props.get("weapon_type") in skills:
-            weaponskill = skills[weapon_item.item_props.get("weapon_type")]
+            weaponskill = 0
+            weapon_item = EwItem(id_item=user_data.weapon)
+            if weapon_item.item_props.get("weapon_type") in skills:
+                weaponskill = skills[weapon_item.item_props.get("weapon_type")]
 
+        else:
+            weaponskill = 0
     else:
-        weaponskill = 0
+        skills = ewutils.weaponskills_get(
+                id_server=user_data.id_server,
+                id_user=user_data.id_user
+            )
+
+        if skills[weapon_type]:
+            weaponskill = skills[weapon_type]
+        else:
+            weaponskill = 0
 
     return weaponskill
 

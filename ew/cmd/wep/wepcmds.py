@@ -56,7 +56,7 @@ async def attack(cmd):
             The block for running calculations of an actual attack
         """
         # Retrive necessary values for an attack
-        attacker_weapon_item = attacker.get_weapon_item()
+        attacker_weapon_item = attacker.get_weapon_item(attacker_mutations)
         attacker_weapon = static_weapons.weapon_map.get(attacker_weapon_item.template)
         attacker_slimeoid = EwSlimeoid(member=attacker_member)
         target_member = cmd.mentions[0]
@@ -1166,7 +1166,7 @@ async def object(cmd):
 
 async def divorce(cmd):
     user_data = EwUser(member=cmd.message.author)
-
+    mutations = user_data.get_mutations()
     weapon_item = EwItem(id_item=user_data.weapon)
     weapon = static_weapons.weapon_map.get(weapon_item.item_props.get("weapon_type"))
 
@@ -1216,8 +1216,9 @@ async def divorce(cmd):
 
             user_data.persist()
 
-            # delete weapon item
-            bknd_item.item_delete(id_item=weapon_item.id_item)
+            if ewcfg.mutation_id_lovehandles not in mutations:
+                # delete weapon item
+                bknd_item.item_delete(id_item=weapon_item.id_item)
 
     await fe_utils.send_message(cmd.client, cmd.message.channel, fe_utils.formatMessage(cmd.message.author, response))
 

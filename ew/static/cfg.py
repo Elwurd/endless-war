@@ -3380,6 +3380,8 @@ mutation_id_ichumfast = "ichumfast"
 mutation_id_scopicretinas = "scopicretinas"
 mutation_id_magicbullettheory = "magicbullettheory"
 mutation_id_stiltwalker = "stiltwalker"
+mutation_id_lovehandles = "lovehandles"
+mutation_id_muckbangbrah = "muckbangbrah"
 
 mutation_milestones = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
 
@@ -3716,7 +3718,7 @@ mutation_descriptions = {
     mutation_id_oneeyeopen: "Use !track @user to keep your eye on a specific player. If they move to a PVP zone, you will receive  a DM. If you are being tracked, you can !shakeoff @user to remove their tracking. To check who you'ree currently tracking, use !thirdeye.",
     mutation_id_bottomlessappetite: "Your maximum hunger is doubled.",
     mutation_id_airlock: "Combined weather effects of all weather-based mutations. This mutation is mutually exclusive with those.",
-    mutation_id_ambidextrous: "If you are unarmed or have a tool equipped, and have a weapon in your sidearm slot, you will default to that weapon. Any weapon that you have mastery 7 or higher with will not be dropped on death.",
+    mutation_id_ambidextrous: "If you are unarmed or have a tool equipped, and have a weapon in your sidearm slot, you will default to that weapon.",
     mutation_id_coleblooded: "You get the ability to bust ghosts without coleslaw. If a ghost haunts you, they lose negaslime instead of gaining it.",
     mutation_id_landlocked: "When standing in a street either bordering an outskirt or the Slime Sea, use !loop to warp to the opposite side of the map. This also works on the ferry and at Slime's End Cliffs. There is a 60 second travel time when using !loop.",
     mutation_id_amnesia: "Your display name is replaced with ????? in EW's messages, and you can delete your message commands without ENDLESS WAR reacting. On a kill, the kill feed message is delayed by 60 seconds.",
@@ -3730,6 +3732,8 @@ mutation_descriptions = {
     mutation_id_scopicretinas: "You can !scout up to two districts away.",
     mutation_id_magicbullettheory: "Upon !reloading an ammunition-based weapon, you will gain an extra bullet in the weapon's clip.",
     mutation_id_stiltwalker: "You can !jump to the blimp from the ground, as well as mines from Waffle House.",
+    mutation_id_lovehandles: "Any weapon that you have mastery 7 or higher with will not be dropped on death. Your weapon isn't deleted when you divorce them.",
+    mutation_id_muckbangbrah: "Food restores 2x as much hunger when roleplaying as a food reviewer: this applies to food eaten in the same place you bought it, and energy drinks drank at night time in your apartment.",
 }
 
 consult_responses = {

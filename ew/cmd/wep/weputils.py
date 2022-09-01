@@ -413,7 +413,7 @@ def canAttack(cmd):
     mutations = user_data.get_mutations()
     poi = poi_static.id_to_poi.get(user_data.poi)
     district_data = EwDistrict(id_server=user_data.id_server, district=user_data.poi)
-    weapon_item = user_data.get_weapon_item()
+    weapon_item = user_data.get_weapon_item(mutations)
     weapon = static_weapons.weapon_map.get(weapon_item.template)
     captcha = weapon_item.item_props.get('captcha')
 
@@ -597,7 +597,8 @@ def canAttack(cmd):
 
 async def attackEnemy(cmd):
     user_data = EwUser(member=cmd.message.author)
-    weapon_item = user_data.get_weapon_item()
+    user_mutations = user_data.get_mutations()
+    weapon_item = user_data.get_weapon_item(user_mutations)
     weapon = static_weapons.weapon_map.get(weapon_item.template)
     resp_cont = EwResponseContainer(id_server=cmd.guild.id)
     slimeoid = EwSlimeoid(member=cmd.message.author)
@@ -618,7 +619,6 @@ async def attackEnemy(cmd):
     if enemy_data.enemytype == ewcfg.enemy_type_sandbag:
         sandbag_mode = True
 
-    user_mutations = user_data.get_mutations()
 
     district_data = EwDistrict(district=user_data.poi, id_server=cmd.guild.id)
 

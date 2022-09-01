@@ -30,7 +30,7 @@ except:
     from ..static.rstatic_dummy import dontfilter_relics
 
 
-def item_dropsome(id_server=None, id_user=None, item_type_filter=None, fraction=None, rigor=False, ambidextrous=False) -> list:
+def item_dropsome(id_server=None, id_user=None, item_type_filter=None, fraction=None, rigor=False, lovehandles=False) -> list:
     """ Return a list of some of a user's non-exempt items to drop. """
     try:
         user_data = EwUser(id_server=id_server, id_user=id_user)
@@ -63,8 +63,8 @@ def item_dropsome(id_server=None, id_user=None, item_type_filter=None, fraction=
 
         if item_type_filter == ewcfg.it_weapon:
             for item in drop_candidates:
-                # Weapons with over 7 mastery are excluded for ambidextrous users
-                if ambidextrous:
+                # Weapons with over 7 mastery are excluded for lovehandles users
+                if lovehandles:
                     weapon = EwItem(id_item=item.get('id_item'))
                     weapon_type = weapon.item_props.get('weapon_type')
                     if weapon_type in mastery:

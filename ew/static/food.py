@@ -2475,6 +2475,13 @@ for food in food_list:
     for alias in food.alias:
         food_map[alias] = food
 
+#ENERGY DRINKS WHOOOOOOOOOOOO (used for mutation muckbangbrah)
+energy_drinks = ["energytaco","khaotickilliflowerfuckenergy","rampagingrowddishfuckenergy","direappleciderfuckenergy","ultimateurinefuckenergy","superwaterfuckenergy","justcumfuckenergy","goonshinefuckenergy","liquidcoffeegroundsfuckenergy","joybeanjavafuckenergy","drfuckerfuckenergy","krakacolafuckenergy","blacklimebonanzafuckenergy","makrutmadnessfuckenergy","leninlimefuckenergy","alqaedakeylimefuckenergy","steelbeamsangriafuckenergy","twintowertropicalfuckenergy","fuckuccino","purpledrink"]
+energy_drink_map = {}
+
+for drink in energy_drinks:
+    energy_drink_map[drink] = food_map.get(drink)
+
 # Pity-pies will also spawn across the map.
 if ewcfg.swilldermuk_active:
     for p in food_list:

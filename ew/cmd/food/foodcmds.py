@@ -518,6 +518,16 @@ async def eat_item(cmd):
                 break
 
     if food_item != None:
+        if ewcfg.mutation_id_muckbangbrah in mutations:
+            poi = poi_static.id_to_poi.get(user_data.poi)
+            if static_food.energy_drink_map.get(food_item.item_props["id_food"]):
+                if poi.is_apartment:
+                    food_item.item_props["recover_hunger"] = int(food_item.item_props["recover_hunger"]) * 2
+            else:
+                for vendor in poi.vendors:
+                    if vendor in static_food.food_map.get(food_item.item_props["id_food"]).vendors:
+                        food_item.item_props["recover_hunger"] = int(food_item.item_props["recover_hunger"]) * 2
+                        break
         response = await user_data.eat(food_item)
         user_data.persist()
     else:

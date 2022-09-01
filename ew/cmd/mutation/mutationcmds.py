@@ -782,8 +782,11 @@ async def forcegraft(cmd):
 
     user_data = EwUser(member=user)
 
+    is_clinic = 0
+    if cmd.tokens[1].lower() == "clinic":
+        is_clinic = 1
     # Get desired mutation
-    target_name = ewutils.flattenTokenListToString(cmd.tokens[1:])
+    target_name = ewutils.flattenTokenListToString(cmd.tokens[1+is_clinic:])
     target = ewutils.get_mutation_alias(target_name)
 
     mutations = user_data.get_mutations()
@@ -794,8 +797,14 @@ async def forcegraft(cmd):
         response = "You already have that mutation."
     else:
         # Add the mutation
-        user_data.add_mutation(id_mutation=target, is_artificial=1)
-        response = "You have forcibly grafted {}.".format(target)
+        artificial = 0
+        if is_clinic:
+            artificial = 1
+            response = "You have forcibly grafted {}. ".format(target) + static_mutations.mutations_map.get(target).str_transplant
+        else:
+            response = "You have forcibly mutated {}. ".format(target) + static_mutations.mutations_map.get(target).str_acquire
+        user_data.add_mutation(id_mutation=target, is_artificial=artificial)
+        
     # Send message
     await fe_utils.send_message(cmd.client, cmd.message.channel, fe_utils.formatMessage(cmd.message.author, response))
 
