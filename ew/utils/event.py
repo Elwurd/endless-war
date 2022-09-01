@@ -16,7 +16,8 @@ def init_stat_function_map():
         ewcfg.stat_kills: process_kills,
         ewcfg.stat_max_kills: process_max_kills,
         ewcfg.stat_slimesfarmed: process_slimesfarmed,
-        ewcfg.stat_slimesscavenged: process_slimesscavenged
+        ewcfg.stat_slimesscavenged: process_slimesscavenged,
+        ewcfg.stat_slimesfished: process_slimesfished,
     }
     global fns_initialized
     fns_initialized = True
@@ -56,6 +57,9 @@ def process_slimesfarmed(id_server = None, id_user = None, value = None):
 
 def process_slimesscavenged(id_server = None, id_user = None, value = None):
     ewstats.track_maximum(id_server=id_server, id_user=id_user, metric=ewcfg.stat_max_slimesscavenged, value=value)
+
+def process_slimesfished(id_server = None, id_user = None, value = None):
+    ewstats.track_maximum(id_server=id_server, id_user=id_user, metric=ewcfg.stat_max_slimesfished, value=value)
 
 
 def process_kills(id_server = None, id_user = None, value = None):

@@ -2447,6 +2447,9 @@ stat_lifetime_slimesfarmed = 'lifetime_slimes_farmed'
 stat_slimesscavenged = 'slimes_scavenged'
 stat_max_slimesscavenged = 'max_slimes_scavenged'
 stat_lifetime_slimesscavenged = 'lifetime_slimes_scavenged'
+stat_slimesfished = 'slimes_fished'
+stat_max_slimesfished = 'max_slimes_fished'
+stat_lifetime_slimesfished = 'lifetime_slimes_fished'
 stat_lifetime_slimeshaunted = 'lifetime_slimes_haunted'
 stat_max_level = 'max_level'
 stat_max_ghost_level = 'max_ghost_level'
@@ -2605,7 +2608,8 @@ stats_clear_on_death = [
     stat_kills,
     stat_pve_kills,
     stat_slimesfarmed,
-    stat_slimesscavenged
+    stat_slimesscavenged,
+    stat_slimesfished
 ]
 
 context_slimeoidheart = 'slimeoidheart'

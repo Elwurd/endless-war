@@ -1667,6 +1667,10 @@ class EwUser(EwUserBase):
                 ewstats.change_stat(user=self, metric=ewcfg.stat_slimesscavenged, n=change)
                 ewstats.change_stat(user=self, metric=ewcfg.stat_lifetime_slimesscavenged, n=change)
 
+            if source == ewcfg.source_fishing:
+                ewstats.change_stat(user=self, metric=ewcfg.stat_slimesfished, n=change)
+                ewstats.change_stat(user=self, metric=ewcfg.stat_lifetime_slimesfished, n=change)
+
         else:
             change *= -1  # convert to positive number
             if source != ewcfg.source_spending and source != ewcfg.source_ghostification:
