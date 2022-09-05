@@ -208,7 +208,7 @@ class EwSlimeoidCombatData:
 
         # If the slimeoid is bigger than size_limit feet. Comes before other matchups, so stats together should equal size. Stats are 1 at minimum in CombatData
         if(not size_limit):
-            size_limit = 42069
+            size_limit = 13
         else:
             size_limit += 3
         print(size_limit)

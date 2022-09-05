@@ -298,7 +298,7 @@ async def data(cmd):
             outfit_map = itm_utils.get_outfit_info(id_user=cmd.message.author.id, id_server=cmd.guild.id)
             user_data.persist()
 
-            # If user is wearing all pieces of the NMS mascot costume, add text 
+            # If user is wearing all pieces of the a costume set, add text 
             if all(elem in cosmetic_id_list for elem in static_cosmetics.cosmetic_nmsmascot):
                 response_block += "You're dressed like a fucking airplane with tits, dude. "
             elif all(elem in cosmetic_id_list for elem in static_cosmetics.cosmetic_hatealiens):
@@ -1337,9 +1337,11 @@ async def fashion(cmd):
                 outfit_map = itm_utils.get_outfit_info(id_user=cmd.message.author.id, id_server=cmd.guild.id)
                 user_data.persist()
                 
-                # If user is wearing all pieces of the NMS mascot costume, add text 
+                # If user is wearing all pieces of the a costume set, add text 
                 if all(elem in adorned_ids for elem in static_cosmetics.cosmetic_nmsmascot):
                     response += "You're dressed like a fucking airplane with tits, dude."
+                elif all(elem in adorned_ids for elem in static_cosmetics.cosmetic_hatealiens):
+                    response += "Your taste in clothes is a symbol of hatred to illegal aliens everywhere."
                 
                 elif outfit_map is not None:
                     response += itm_utils.get_style_freshness_rating(user_data=user_data, dominant_style=outfit_map['dominant_style'])
@@ -1429,9 +1431,11 @@ async def fashion(cmd):
             if len(adorned_cosmetics) >= 2:
                 response += "\n\n"
 
-                # If user is wearing all pieces of the NMS mascot costume, add text 
+                # If user is wearing all pieces of a costume set, add text 
                 if all(elem in adorned_ids for elem in static_cosmetics.cosmetic_nmsmascot):
                     response += "They're dressed like a fucking airplane with tits, dude."
+                elif all(elem in adorned_ids for elem in static_cosmetics.cosmetic_hatealiens):
+                    response += "Their taste in clothes is a symbol of hatred to illegal aliens everywhere."
                 elif user_data.freshness < ewcfg.freshnesslevel_1:
                     response += "Their outfit is starting to look pretty fresh, but They’ve got a long way to go if they wanna be NLACakaNM’s next top model."
                 elif user_data.freshness < ewcfg.freshnesslevel_2:

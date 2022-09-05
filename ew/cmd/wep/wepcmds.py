@@ -983,18 +983,32 @@ async def annoint(cmd):
     user_data = EwUser(member=cmd.message.author)
     weapon_item = EwItem(id_item=user_data.weapon)
 
+    # Make sure user has a weapon equipped before all else
+    if user_data.weapon <= 0:
+        response = "Equip a weapon first."
+        await fe_utils.send_message(cmd.client, cmd.message.channel, fe_utils.formatMessage(cmd.message.author, response))
+
+    # Grab the wanted name
     if cmd.tokens_count < 2:
         annoint_name = weapon_item.item_props.get("weapon_name")
     else:
-        annoint_name = cmd.message.content[(len(ewcfg.cmd_annoint)):].strip()
+        annoint_name = cmd.message.content[(len(ewcfg.cmd_annoint)):].strip() 
 
+    # See if the player has a poudrin
+    poudrin = bknd_item.find_item(item_search="slimepoudrin", id_user=cmd.message.author.id, id_server=cmd.guild.id if cmd.guild is not None else None, item_type_filter=ewcfg.it_item)
+
+    # Checks for name too long, poudrin, and slime
     if len(annoint_name) > 32:
-        response = "That name is too long. ({:,}/32)".format(len(annoint_name))
+        response = "That name is too long.({:,}/32)".format(len(annoint_name))
+    elif poudrin is None:
+        response = "You need a slime poudrin."
+    elif user_data.slimes < 100:
+        response = "You need more slime."
+    # Change weapon properties
     else:
-        user_data = EwUser(member=cmd.message.author)
+        newname = 0
 
-        poudrin = bknd_item.find_item(item_search="slimepoudrin", id_user=cmd.message.author.id, id_server=cmd.guild.id if cmd.guild is not None else None, item_type_filter=ewcfg.it_item)
-
+        # Make sure name is original
         all_weapons = bknd_item.inventory(
             id_server=cmd.guild.id,
             item_type_filter=ewcfg.it_weapon
@@ -1003,32 +1017,32 @@ async def annoint(cmd):
             if weapon.get("name") == annoint_name and weapon.get("id_item") != user_data.weapon:
                 response = "**ORIGINAL WEAPON NAME DO NOT STEAL.**"
                 return await fe_utils.send_message(cmd.client, cmd.message.channel, fe_utils.formatMessage(cmd.message.author, response))
-
-        if poudrin is None:
-            response = "You need a slime poudrin."
-        elif user_data.slimes < 100:
-            response = "You need more slime."
-        elif user_data.weapon < 0:
-            response = "Equip a weapon first."
-        else:
-            # Perform the ceremony.
-            user_data.change_slimes(n=-100, source=ewcfg.source_spending)
+            
+        # Change weapon's name if needed
+        if weapon_item.item_props["weapon_name"] != annoint_name:
+            newname = 1
             weapon_item.item_props["weapon_name"] = annoint_name
-            weapon_item.persist()
 
-            if user_data.weaponskill < 10:
-                user_data.add_weaponskill(n=1, weapon_type=weapon_item.item_props.get("weapon_type"))
+        # Change user
+        user_data.change_slimes(n=-100, source=ewcfg.source_spending)
 
-            # delete a slime poudrin from the player's inventory
-            bknd_item.item_delete(id_item=poudrin.get('id_item'))
+        if user_data.weaponskill < 10:
+            user_data.add_weaponskill(n=1, weapon_type=weapon_item.item_props.get("weapon_type"))
 
-            user_data.persist()
+        # delete a slime poudrin from the player's inventory
+        bknd_item.item_delete(id_item=poudrin.get('id_item'))
 
+        # Persist user & weapon
+        user_data.persist()
+        weapon_item.persist()
+
+        # Make response
+        if newname == 1:
             naming_text = "It is now known as {}!\n\nThe name draws you closer to your weapon. ".format(annoint_name)
-            if annoint_name == "" or annoint_name is None:
-                naming_text = ""
+        else:
+            naming_text = ""
 
-            response = "You place your weapon atop the poudrin and annoint it with slime. {}The poudrin was destroyed in the process.".format(naming_text)
+        response = "You place your weapon atop the poudrin and annoint it with slime. {}The poudrin was destroyed in the process.".format(naming_text)
 
     # Send the response to the player.
     await fe_utils.send_message(cmd.client, cmd.message.channel, fe_utils.formatMessage(cmd.message.author, response))

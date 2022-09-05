@@ -188,9 +188,11 @@ def gen_data_text(
         if len(adorned_cosmetics) > 0:
             response_block += "They have a {} adorned. ".format(ewutils.formatNiceList(adorned_cosmetics, 'and'))
        
-            # If user is wearing all pieces of the NMS mascot costume, add text 
+            # If user is wearing all pieces of a costume set, add text 
             if all(elem in cosmetic_id_list for elem in static_cosmetics.cosmetic_nmsmascot):
                 response_block += "They're dressed like a fucking airplane with tits, dude. "
+            elif all(elem in cosmetic_id_list for elem in static_cosmetics.cosmetic_hatealiens):
+                response_block += "Their taste in clothes is a symbol of hatred to illegal aliens everywhere."
             # Otherwise, generate response text.
             elif user_data.freshness < ewcfg.freshnesslevel_1:
                 response_block += "Their outfit is starting to look pretty fresh, but They’ve got a long way to go if they wanna be NLACakaNM’s next top model. "
