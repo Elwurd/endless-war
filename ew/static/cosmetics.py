@@ -2248,51 +2248,56 @@ cosmetic_items_list = [
     EwCosmeticItem(
         id_cosmetic = "rosetintedglasses",
         str_name = "Rosetinted Glasses",
-        str_desc = "Legend says that these glasses removes the green purple and pink filter of NLACakaNM! Of course, unless you're a hardcore artist who values every color, why would you ever want this?",
+        str_desc = "Legend says that these glasses remove the green, purple, and pink filter of NLACakaNM! Of course, unless you're a hardcore artist who values every color, why would you ever want this?",
         rarity = "Plebeian",
         durability = 250000,
         style = "cute",
         freshness = 7, 
-        vendors = [], # Get it from mobs, chumps.
+        vendors = [],
     ),
     EwCosmeticItem(
         id_cosmetic = "rabbitsuit",
-        str_name = "Rabbitz Suit",
+        str_name = "Rabbit Suit",
         str_desc = "Whoever made this revealing suit knew exactly what they were doing, and more importantly what sultry magazine they were infringing the copyright from. Keep those fishnet socks high! Because your inner body temperature won't be when the snow hits.",
         rarity = "Patrician",
         durability = 250000,
         style = "beautiful",
+        ability = "furry",
         freshness = 10,
         acquisition = "smelting",
     ),
     EwCosmeticItem(
         id_cosmetic = "poudrinonastringhat",
         str_name = "Poudrin on a String Hat",
-        str_desc = "Whoa, hey it's a poudrin! Go get it!",
+        str_desc = "Whoa, hey! It's a poudrin! Go get it!",
         rarity = "Plebeian",
         durability = 250000,
         style = "cute",
         freshness = 8,
         is_hat = True,
+        acquisition = "smelting",
     ),
     EwCosmeticItem(
-        id_cosmetic = "hellys",
-        str_name = "Hellys",
-        str_desc = "Now this is how you travel in style!",
+        id_cosmetic = "heelys",
+        str_name = "Heelys",
+        str_desc = "Now THIS is how you travel in style!",
         rarity = "Patrician",
+        ability = "boost",
         durability = 250000,
         style = "cute",
         freshness = 7,
+        acquisition = "smelting",
     ),
 
 EwCosmeticItem(
         id_cosmetic = "heartearrings",
         str_name = "Heart Earrings",
-        str_desc = "A pair of pretty handmade earrings molded into the shape of the traditional yet innacurate depiction of a heart. How cute!",
+        str_desc = "A pair of pretty handmade earrings molded into the shape of the traditional (yet inaccurate) depiction of a heart. How cute!",
         rarity = "Patrician",
         durability = 250000,
         style = "cute",
         freshness = 8,
+        acquisition = "smelting",
     ),
 
 EwCosmeticItem(
@@ -2303,6 +2308,7 @@ EwCosmeticItem(
         durability = 250000,
         style = "beautiful",
         freshness = 8,
+        acquisition = "smelting",
     ),
 
 EwCosmeticItem(
@@ -2313,6 +2319,7 @@ EwCosmeticItem(
         durability = 250000,
         style = "cool",
         freshness = 8,
+        acquisition = "smelting",
     ),
 
 EwCosmeticItem(
@@ -2323,6 +2330,7 @@ EwCosmeticItem(
         durability = 250000,
         style = "evil",
         freshness = 8,
+        acquisition = "smelting",
     ),
     EwCosmeticItem(
         id_cosmetic = "slimecorpearrings",
@@ -2332,6 +2340,7 @@ EwCosmeticItem(
         durability = 250000,
         style = "smart",
         freshness = 8,
+        acquisition = "smelting",
     ),
     EwCosmeticItem(
         id_cosmetic = "rivetearrings",
@@ -2341,11 +2350,12 @@ EwCosmeticItem(
         durability = 250000,
         style = "tough",
         freshness = 8,
+        acquisition = "smelting",
     ),
     EwCosmeticItem(
         id_cosmetic = "burqa",
         str_name = "Burqa",
-        str_desc = "The soul's last defense in this satanic world of sex and slime. You will be safe inshallah.",
+        str_desc = "The soul's last defense in this satanic world of sex and slime. You will be safe. **Inshallah.**",
         rarity = "Plebeian",
         durability = 250000,
         style = "beautiful",
@@ -2356,16 +2366,17 @@ EwCosmeticItem(
     EwCosmeticItem(
         id_cosmetic = "witchoutfit",
         str_name = "Witch Outfit",
-        str_desc = "It's an outfit that might actually used to be worn by a witch. Of course, we're in a society where it's no longer a profession gatekept by old crones so now everyone gets to cook juvies in ovens.",
+        str_desc = "An outfit that might've actually been worn by a witch. Of course, we're in a society where it's no longer a profession gatekept by old crones. Now everyone gets to cook Juvies in ovens!",
         rarity = "Plebeian",
         durability = 250000,
         style = "smart",
         freshness = 8,
+        acquisition = "smelting",
     ),
     EwCosmeticItem(
         id_cosmetic = "armyuniform",
         str_name = "Army Uniform",
-        str_desc = "An old soldiers uniform that's been carefully retrofitted to fit you nicely. Comes with pouches for your favorite crayons to chew on.",
+        str_desc = "An old soldier's uniform that's been carefully retrofitted to fit you nicely. Comes with pouches for your favorite crayons to chew on.",
         rarity = "Plebeian",
         durability = 250000,
         style = "tough",
@@ -2422,7 +2433,7 @@ EwCosmeticItem(
     EwCosmeticItem(
         id_cosmetic = "nightvisiongoggles",
         str_name = "Night Vision Goggles",
-        str_desc = "Clunky headgear with 3 brightly glowing lens. Now you too can Sam Fisher lone juvies walking stray alley ways at night, or at least you would, if not for the fact that the batteries are dead and the charger wasn't included.",
+        str_desc = "Clunky headgear with 3 brightly glowing lenses. Now you too can Sam Fisher lone juvies walking stray alleyways at night! Or at least, you would, if not for the fact that the batteries are dead and the charger wasn't included.",
         rarity = "Plebeian",
         durability = 250000,
         style = "smart",
@@ -2433,7 +2444,7 @@ EwCosmeticItem(
     EwCosmeticItem(
         id_cosmetic = "camofatigues",
         str_name = "Camo Fatigues",
-        str_desc = "It's a camo design of an indescrept and faded color on a set of soldier's fatigues. Nothing a little dye can't fix.",
+        str_desc = "It's a camo design of an indescript and faded color on a set of soldier's fatigues. Nothing a little dye can't fix.",
         rarity = "Plebeian",
         durability = 250000,
         style = "cool",
@@ -2455,7 +2466,7 @@ EwCosmeticItem(
     EwCosmeticItem(
         id_cosmetic = "aviatorjacket",
         str_name = "Aviator's Jacket",
-        str_desc = "It's the perfect match for the Aviator's Hat, or is it the Bomber Hat? In either case you'll still boil in the sun with the fur and leather it's made from. ",
+        str_desc = "It's the perfect match for the Aviator's Hat - or is it the Bomber Hat? In either case, you'll still boil in the sun with the fur and leather it's made from.",
         rarity = "Plebeian",
         durability = 250000,
         style = "tough",
@@ -2466,7 +2477,7 @@ EwCosmeticItem(
     EwCosmeticItem(
         id_cosmetic = "sloshhat",
         str_name = "Slosh Hat",
-        str_desc = "A dark greyish green cowboy like hat with a wide brim at the base of the hat, it also has a chin strap which makes you look like you have two chins instead of one. One side is folded up with a special pin resembling the endless war tower.",
+        str_desc = "A dark greyish-green cowboy-like hat with a wide brim at the base. It has a chin strap which makes you look like you have two chins instead of one. One side is folded up with a pin resembling ENDLESS WAR himself.",
         rarity = "Plebeian",
         durability = 250000,
         style = "smart",
@@ -2477,12 +2488,13 @@ EwCosmeticItem(
     EwCosmeticItem( 
         id_cosmetic = "alienluxuryhandbag",
         str_name = "Alien Luxury Hand Bag",
-        str_desc = "A luxurious show-off of your patriotism, composed entirely out of the leather of the grays that tried to do a hostile takeover of the city and the shreds of materials they have left behind.",
+        str_desc = "A luxurious show-off of your patriotism, composed entirely out of the leather of the grays that tried to do a hostile takeover of the city, as well as the shreds of materials they left behind.",
         rarity = "Profollean",
         ability = "hatealiens",
         durability = 250000,
         style = "beautiful",
         freshness = 10,
+        acquisition = "smelting",
     ),
     EwCosmeticItem(
         id_cosmetic = "monofilamentkaleidoscopejacquard",
@@ -2493,26 +2505,29 @@ EwCosmeticItem(
         durability = 250000,
         style = "beautiful",
         freshness = 10,
+        acquisition = "smelting",
     ),
     EwCosmeticItem(
         id_cosmetic = "monofilamentpalazzo",
         str_name = "Mono Palazzo",
-        str_desc = "A popular form super wide-leg pants that are common in urban dance groups and club dancing. Thanks to the materials involed, you are advised to dance on any alien burial sites as you see fit as a funny joke from your fellow juveniles.",
+        str_desc = "A popular form of super wide-leg pants that are common in urban dance groups and club dancing. Thanks to the materials invovled, you are advised to dance on any alien burial sites as you see fit. It's a funny joke from your fellow juveniles!",
         rarity = "Profollean",
         ability = "hatealiens",
         durability = 250000,
         style = "beautiful",
         freshness = 10,
+        acquisition = "smelting",
     ),
     EwCosmeticItem(
         id_cosmetic = "alienleathermidcalfboots",
         str_name = "Alien Midcalf Boots",
-        str_desc = "A set of leather and soft cloth boots that will offend any aliens that get stomped in the face by. Not because of the fact that it's made out of the skin of their brethren, but because getting stomped in the face is a universal sign of \"Go fuck yourself\".",
+        str_desc = "A set of leather and soft cloth boots that will offend any aliens that get stomped in the face. Not because of the fact that it's made out of the skin of their brethren, but because getting stomped in the face is a universal sign of \"Go fuck yourself\".",
         rarity = "Profollean",
         ability = "hatealiens",
         durability = 250000,
         style = "beautiful",
         freshness = 10,
+        acquisition = "smelting",
     ),
 ]
 
@@ -2523,7 +2538,7 @@ cosmetic_map = {}
 # A list of cosmetic names.
 cosmetic_names = []
 
-# A list of grouped cosmetics
+# A list of grouped cosmetics.
 cosmetic_nmsmascot = []
 cosmetic_hatealiens = []
 
@@ -2534,3 +2549,5 @@ for cosmetic in cosmetic_items_list:
     cosmetic_names.append(cosmetic.id_cosmetic)
     if cosmetic.ability == "nmsmascot":
         cosmetic_nmsmascot.append(cosmetic.id_cosmetic)
+    elif cosmetic.ability == "hatealiens":
+        cosmetic_hatealiens.append(cosmetic.id_cosmetic)

@@ -416,7 +416,7 @@ def item_dropall(user_data):
         bknd_core.execute_sql_query(
             "UPDATE items SET id_user = %s WHERE id_user = %s AND id_server = %s AND soulbound = 0", (
                 user_data.poi,
-                user_data.id_user,
+                str(user_data.id_user),
                 user_data.id_server
             ))
 

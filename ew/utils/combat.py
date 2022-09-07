@@ -1734,7 +1734,7 @@ class EwUser(EwUserBase):
 
         client: discord.Client = ewcfg.get_client()
         server: discord.Guild = client.get_guild(self.id_server)
-        member: discord.Member = server.get_member(self.id_user)
+        member: EwPlayer = EwPlayer(id_server=self.id_server, id_user=self.id_user)
 
         # Make The death report
         deathreport = fe_utils.create_death_report(cause=cause, user_data=self, deathmessage = deathmessage)
@@ -1885,16 +1885,16 @@ class EwUser(EwUserBase):
         # Run explosion after location/stat reset, to prevent looping onto self
         if cause not in ewcfg.explosion_block_list:
             if user_has_combustion:
-                explode_resp = "\n{} spontaneously combusts, horribly dying in a fiery explosion of slime and shrapnel!! Oh, the humanity!\n".format(server.get_member(self.id_user).display_name)
+                explode_resp = "\n{} spontaneously combusts, horribly dying in a fiery explosion of slime and shrapnel!! Oh, the humanity!\n".format(member.display_name)
                 resp_cont.add_channel_response(explode_poi_channel, explode_resp)
 
                 explosion = await explode(damage=explode_damage, district_data=explode_district)
                 resp_cont.add_response_container(explosion)
 
-        ewutils.logMsg(f'Server {server.name} ({server.id}): {member.name} ({self.id_user}) was killed by {self.id_killer} - cause was {cause}')
+        ewutils.logMsg(f'Server {server.name} ({server.id}): {member.display_name} ({self.id_user}) was killed by {self.id_killer} - cause was {cause}')
         # You can opt out of the heavy roles update
         if updateRoles:
-            await ewrolemgr.updateRoles(client, member)
+            await ewrolemgr.updateRoles(client, server.get_member(self.id_user))
 
         return resp_cont
 

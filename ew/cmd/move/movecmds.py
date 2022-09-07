@@ -544,7 +544,7 @@ async def look(cmd):
 
     # if it's a subzone, check who owns the actual district
     if poi.is_subzone:
-        controlled_poi = poi_static.id_to_poi.get(poi.mother_districts[0])
+        controlled_poi = poi_static.id_to_poi.get(poi.mother_districts[0] if len(poi.mother_districts) > 0 else poi.father_district)
         controlled_data = EwDistrict(district=controlled_poi.id_poi, id_server=user_data.id_server)
     else:
         controlled_data = district_data
@@ -634,7 +634,7 @@ async def survey(cmd):
 
     # if it's a subzone, check who owns the actual district
     if poi.is_subzone:
-        controlled_poi = poi_static.id_to_poi.get(poi.mother_districts[0])
+        controlled_poi = poi_static.id_to_poi.get(poi.mother_districts[0] if len(poi.mother_districts) > 0 else poi.father_district)
         controlled_data = EwDistrict(district=controlled_poi.id_poi, id_server=user_data.id_server)
     else:
         controlled_data = district_data

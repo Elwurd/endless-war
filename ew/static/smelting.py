@@ -2156,6 +2156,7 @@ EwSmeltingRecipe(
         str_name="Witch Outfit",
         alias=[
             'witchs clothes',
+            'witch',
         ],
         ingredients={
             ewcfg.item_id_textiles: 5,
@@ -2237,6 +2238,7 @@ EwSmeltingRecipe(
         str_name="Rivet Earrings",
         alias=[
             'rivetear',
+            'rivet',
         ],
         ingredients={
             ewcfg.item_id_ironingot: 1,

@@ -314,7 +314,7 @@ async def change_body_part(cmd):
         }
 
         # Gets part_map based on command used
-        desired_change, part_map = cmd_to_change_type.get(cmd.tokens[0])
+        desired_change, part_map = cmd_to_change_type.get(cmd.tokens[0].lower())
 
         if cmd.tokens_count == 1:
             if slimeoidtype == "Slimeoid":
@@ -426,7 +426,7 @@ async def change_stat(cmd):
             ewcfg.cmd_lowergrit: "- grit",
             ewcfg.cmd_lowerchutzpah: "- chutzpah",
         }
-        desired_change = cmd_to_change_type.get(cmd.tokens[0])
+        desired_change = cmd_to_change_type.get(cmd.tokens[0].lower())
 
         moxie_mod = 0
         grit_mod = 0

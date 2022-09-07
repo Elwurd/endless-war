@@ -169,8 +169,8 @@ async def toss_squatters(user_id = None, server_id = None, keepKeys = False):
                 ))
 
             squatters = cursor.fetchall()
-            key_1 = EwItem(id_item=apt_info.key_1).id_owner
-            key_2 = EwItem(id_item=apt_info.key_2).id_owner
+            key_1 = EwItem(id_item=apt_info.key_1).id_owner if apt_info.key_1 != 0 else ""
+            key_2 = EwItem(id_item=apt_info.key_2).id_owner if apt_info.key_2 != 0 else ""
             for squatter in squatters:
                 sqt_data = EwUser(id_user=squatter[0], id_server=player_info.id_server)
                 if keepKeys and (sqt_data.id_user == key_1 or sqt_data.id_user == key_2):

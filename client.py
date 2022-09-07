@@ -160,7 +160,7 @@ async def on_member_remove(member):
             return
 
         user_data.trauma = ewcfg.trauma_id_suicide
-        await user_data.die(cause=ewcfg.cause_leftserver)
+        await user_data.die(updateRoles=False, cause=ewcfg.cause_leftserver)
 
         ewutils.logMsg('Player killed for leaving the server.')
     except Exception as e:

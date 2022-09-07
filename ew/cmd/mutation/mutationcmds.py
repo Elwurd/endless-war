@@ -458,7 +458,6 @@ async def fursuit(cmd):
     # gets days until full moon
     if ewcfg.mutation_id_organicfursuit in mutations:
         days_until = -market_data.day % 29
-        print(days_until)
         if days_until > 15:
             days_until -= 16
         elif days_until <= 14:

@@ -1055,7 +1055,7 @@ async def apt_look(cmd):
     if all(elem in furniture_id_list for elem in static_items.furniture_NMS):
         furn_response += "This room just reeks of dorm energy. You've clearly pilfered some poor Neo Milwaukee State student's room just to make a hollow imitation of your college days. Unless you haven't had those yet, in which case, Good Luck Charlie.\n\n"
     if all(elem in furniture_id_list for elem in static_items.furniture_hatealiens):
-        furn_response += "Whoa, your flat is so futuristic! You’ve got LED lights hanging from every wall to show how far in the future you are compared to everyone else. They just don’t get it.\n\n"
+        furn_response += "Whoa, your flat is so futuristic! You;ve got LED lights hanging from every wall to show how far in the future you are compared to everyone else. They just don't get it.\n\n"
 
 
     market_data = EwMarket(id_server=playermodel.id_server)
@@ -1476,8 +1476,8 @@ async def remove_item(cmd):
     item_search = ewutils.flattenTokenListToString(cmd.tokens[startparse:])
 
     aptmodel = EwApartment(id_user=recipient, id_server=playermodel.id_server)
-    key_1 = EwItem(id_item=aptmodel.key_1)
-    key_2 = EwItem(id_item=aptmodel.key_2)
+    key_1 = EwItem(id_item=aptmodel.key_1) if aptmodel.key_1 != 0 else EwItem(id_item=None)
+    key_2 = EwItem(id_item=aptmodel.key_2) if aptmodel.key_2 != 0 else EwItem(id_item=None)
 
     if key_1.id_owner != str(usermodel.id_user) and key_2.id_owner != str(usermodel.id_user) and usermodel.visiting != ewcfg.location_id_empty:
         response = "Burglary takes finesse. You are but a lowly gangster, who takes money the old fashioned way."

@@ -212,6 +212,8 @@ async def find_recipes_by_item(cmd):
         found_recipe = smelting.smelting_recipe_map.get(sought_item)
         if found_recipe != None:
             used_recipe = found_recipe.id_recipe
+        else:
+            used_recipe = sought_item
 
         makes_sought_item = []
         uses_sought_item = []
