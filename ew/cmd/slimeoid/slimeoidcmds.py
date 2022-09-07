@@ -92,6 +92,7 @@ async def dissolveslimeoid(cmd):
             cos = EwItem(id_item=item.get('id_item'))
             if cos.item_props.get('slimeoid') == 'true':
                 cos.item_props['slimeoid'] = 'false'
+                cos.id_owner = user_data.id_user
                 cos.persist()
 
         bknd_core.execute_sql_query(
@@ -164,7 +165,7 @@ async def slimeoid(cmd):
         response += slimeoid_utils.slimeoid_describe(slimeoid)
 
         cosmetics = bknd_item.inventory(
-            id_user=user_data.id_user,
+            id_user=slimeoid.id_slimeoid,
             id_server=cmd.guild.id,
             item_type_filter=ewcfg.it_cosmetic
         )
@@ -184,7 +185,7 @@ async def slimeoid(cmd):
     
             # If it has more than 2, give it a freshness rating
             if len(adorned_cosmetics) >= 2:
-                outfit_map = item_utils.get_outfit_info(id_user=user_data.id_user, id_server=cmd.guild.id, slimeoid = True)
+                outfit_map = item_utils.get_outfit_info(id_user=slimeoid.id_slimeoid, id_server=cmd.guild.id, slimeoid = True)
 
                 if outfit_map is not None:
                     response += " Its total freshness rating is a {} {}.".format(outfit_map['dominant_style'], outfit_map['total_freshness'])
@@ -203,7 +204,7 @@ async def slimeoid(cmd):
 
 
     # Send the response to the player.
-    await fe_utils.send_message(cmd.client, cmd.message.channel, fe_utils.formatMessage(cmd.message.author, response))
+    return await fe_utils.send_message(cmd.client, cmd.message.channel, fe_utils.formatMessage(cmd.message.author, response))
 
 
 # play with your slimeoid
@@ -715,7 +716,7 @@ async def slimeoidbattle(cmd):
 
             # Dedorn all items
             cosmetics = bknd_item.inventory(
-                id_user=cmd.message.author.id,
+                id_user=loser.id_user,
                 id_server=cmd.guild.id,
                 item_type_filter=ewcfg.it_cosmetic
             )
@@ -725,6 +726,7 @@ async def slimeoidbattle(cmd):
                 cos = EwItem(id_item=item.get('id_item'))
                 if cos.item_props.get('slimeoid') == 'true':
                     cos.item_props['slimeoid'] = 'false'
+                    cos.id_owner = loser.id_user
                     cos.persist()
 
             # Turn slimeoid and negaslimeoids into their corresponding type of items
@@ -1329,6 +1331,7 @@ async def dress_slimeoid(cmd):
                         response = "You give {} a {}.".format(slimeoid.name, item_sought.item_props.get('cosmetic_name'))
 
                     item_sought.item_props['slimeoid'] = 'true'
+                    item_sought.id_owner = slimeoid.id_slimeoid
                     item_sought.persist()
                     user_data.persist()
                 else:
@@ -1374,7 +1377,7 @@ async def undress_slimeoid(cmd):
         if item_search != None and len(item_search) > 0:
 
             cosmetics = bknd_item.inventory(
-                id_user=cmd.message.author.id,
+                id_user=slimeoid.id_slimeoid,
                 id_server=cmd.guild.id,
                 item_type_filter=ewcfg.it_cosmetic
             )
@@ -1391,12 +1394,13 @@ async def undress_slimeoid(cmd):
 
                 response = "You take the {} back from {}".format(item_sought.item_props.get('cosmetic_name'), slimeoid.name)
                 item_sought.item_props['slimeoid'] = 'false'
+                item_sought.id_owner = user_data.id_user
 
                 item_sought.persist()
             else:
-                response = 'You don\'t have one.'
+                response = 'They don\'t have one.'
         else:
-            response = 'Dedorn which cosmetic? Check your **!inventory**.'
+            response = 'Dedorn which cosmetic? Check your **!slimeoidinventory**.'
 
     await fe_utils.send_message(cmd.client, cmd.message.channel, fe_utils.formatMessage(cmd.message.author, response))
 

@@ -1360,6 +1360,11 @@ async def fashion(cmd):
                 slimeoid_adorned_cosmetics = []
 
                 # Get the slimeoid's adorned cosmetics
+                cosmetic_items = bknd_item.inventory(
+                    id_user=slimeoid.id_slimeoid,
+                    id_server=cmd.guild.id,
+                    item_type_filter=ewcfg.it_cosmetic
+                )
                 for cosmetic in cosmetic_items:
                     c = EwItem(id_item=cosmetic.get('id_item'))
                     if c.item_props.get('slimeoid') == 'true':
@@ -1372,7 +1377,7 @@ async def fashion(cmd):
 
                     # If the slimeoid has more than one adorned cosmetic, give it a freshness rating.
                     if len(slimeoid_adorned_cosmetics) >= 2:
-                        outfit_map = itm_utils.get_outfit_info(id_user=cmd.message.author.id, id_server=cmd.guild.id, slimeoid = True)
+                        outfit_map = itm_utils.get_outfit_info(id_user=slimeoid.id_slimeoid, id_server=cmd.guild.id, slimeoid = True)
 
                         if outfit_map is not None:
                             response += " Its total freshness rating is a {} {}.".format(outfit_map['dominant_style'], outfit_map['total_freshness'])
@@ -1484,6 +1489,11 @@ async def fashion(cmd):
                 slimeoid_adorned_cosmetics = []
 
                 # Get the cosmetics worn by the slimeoid
+                cosmetic_items = bknd_item.inventory(
+                    id_user=slimeoid.id_slimeoid,
+                    id_server=cmd.guild.id,
+                    item_type_filter=ewcfg.it_cosmetic
+                )
                 for cosmetic in cosmetic_items:
                     c = EwItem(id_item=cosmetic.get('id_item'))
                     if c.item_props.get('slimeoid') == 'true':
@@ -1496,7 +1506,7 @@ async def fashion(cmd):
 
                     # Give the slimeoid a freshness rating if it's wearing more than 1 article of clothing.
                     if len(slimeoid_adorned_cosmetics) >= 2:
-                        outfit_map = itm_utils.get_outfit_info(id_user=user_data.id_user, id_server=cmd.guild.id, slimeoid = True)
+                        outfit_map = itm_utils.get_outfit_info(id_user=slimeoid.id_slimeoid, id_server=cmd.guild.id, slimeoid = True)
 
                         if outfit_map is not None:
                             response += " Its total freshness rating is a {} {}.".format(outfit_map['dominant_style'], outfit_map['total_freshness'])

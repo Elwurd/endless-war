@@ -41,6 +41,7 @@ from ew.utils import prank as prank_utils
 from ew.utils import rolemgr as ewrolemgr
 from ew.utils.combat import EwUser
 from ew.utils.district import EwDistrict
+from ew.utils.slimeoid import EwSlimeoid
 try:
     from ew.cmd import debugr as debugr
 except:
@@ -219,6 +220,16 @@ async def inventory_print(cmd):
     user_data = EwUser(id_user=player.id_user, id_server=player.id_server)
     poi_data = poi_static.id_to_poi.get(user_data.poi)
 
+    direct_address = "You are"
+    #switch to the player's slimeoid's inventory if its the command for that
+    if cmd.tokens[0] in [ewcfg.cmd_inventory_alt4, ewcfg.cmd_inventory_alt5, ewcfg.cmd_inventory_alt6, ewcfg.cmd_inventory_alt7]:
+        slimeoid = EwSlimeoid(cmd.message.author)
+        if slimeoid.life_state == ewcfg.slimeoid_state_none:
+            response = "You don't have a Slimeoid with you."
+            return await fe_utils.send_message(cmd.client, cmd.message.channel, fe_utils.formatMessage(cmd.message.author, response))
+        target_inventory = slimeoid.id_slimeoid
+        direct_address = slimeoid.name + " is"
+
     # Note if this is in dms or not, so dms don't get formatted
     if isinstance(cmd.message.channel, discord.DMChannel) and cmd.message.channel.recipient.id == cmd.message.author.id:
         targeting_dms = True
@@ -263,7 +274,7 @@ async def inventory_print(cmd):
     # Check if the user has the bot blocked from dms, by dming them of course
     if targeting_dms:
         try:
-            resp_txt = "__You are holding:__" if is_player_inventory else "__The community chest contains:__"
+            resp_txt = "__"+direct_address+" holding:__" if is_player_inventory else "__The community chest contains:__"
             await fe_utils.send_message(cmd.client, target_channel, resp_txt)
         except:
             # you can only tell them to unblock you if the channel they sent it through isn't their dms
@@ -340,7 +351,7 @@ async def inventory_print(cmd):
 
         #Less tokens exist than colours or weapons. Search each token instea dof each colour/weapon
         if(len(lower_token_list) < 20): #anything above that is just gonna make this loop run long
-            i = 0
+            i = 1
             while i < len(lower_token_list):
                 token = lower_token_list[i]
 
@@ -358,14 +369,18 @@ async def inventory_print(cmd):
                 weapon_prop = static_weapons.weapon_map.get(token)
                 if(weapon_prop):
                     prop_hunt["weapon_type"] = weapon_prop.id_weapon
+                    i += 1
+                
+                if not (hue_prop or weapon_prop):
+                    i += 1
 
-                i += 1
+                
         
         if(not prop_hunt):
             prop_hunt = None
 
         #Display the colour infront of the name, or not
-        if 'color' or 'colour' or 'hue' in lower_token_list:
+        if 'color' in lower_token_list or 'hue' in lower_token_list or 'colour' in lower_token_list:
             display_hue = True
         #Display the weapon type's name after the weapon's name
         if "weapontype" in lower_token_list:
@@ -459,7 +474,6 @@ async def inventory_print(cmd):
                     soulbound_style=("**" if item.get('soulbound') else ""),
                     quantity=(" x{:,}".format(item.get("quantity")) if (item.get("quantity") > 1) else "")
                 )
-                print(item.get("id_weapon"))
 
                 # Print item type labels if sorting by type and showing a new type of items
                 if sort_by_type:

@@ -740,6 +740,7 @@ async def destroy_slimeoid(cmd):
             cos = EwItem(id_item=item.get('id_item'))
             if cos.item_props.get('slimeoid') == 'true':
                 cos.item_props['slimeoid'] = 'false'
+                cos.id_owner = user_data.id_user
                 cos.persist()
         
         # Craft the response

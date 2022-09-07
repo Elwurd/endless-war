@@ -177,7 +177,6 @@ def get_outfit_info(id_user, id_server, wanted_info = None, slimeoid = False):
         item_type_filter=ewcfg.it_cosmetic
 
     )
-
     adorned_cosmetics = []
     adorned_ids = []
 

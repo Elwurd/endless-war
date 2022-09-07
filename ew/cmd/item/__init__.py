@@ -14,6 +14,10 @@ cmd_map = {
     ewcfg.cmd_inventory_alt1: itemcmds.inventory_print,
     ewcfg.cmd_inventory_alt2: itemcmds.inventory_print,
     ewcfg.cmd_inventory_alt3: itemcmds.inventory_print,
+    ewcfg.cmd_inventory_alt4: itemcmds.inventory_print,
+    ewcfg.cmd_inventory_alt5: itemcmds.inventory_print,
+    ewcfg.cmd_inventory_alt6: itemcmds.inventory_print,
+    ewcfg.cmd_inventory_alt7: itemcmds.inventory_print,
     ewcfg.cmd_communitychest: itemcmds.inventory_print,
 
     # get an item's description
@@ -87,6 +91,10 @@ dm_cmd_map = {
     ewcfg.cmd_inventory_alt1: itemcmds.inventory_print,
     ewcfg.cmd_inventory_alt2: itemcmds.inventory_print,
     ewcfg.cmd_inventory_alt3: itemcmds.inventory_print,
+    ewcfg.cmd_inventory_alt4: itemcmds.inventory_print,
+    ewcfg.cmd_inventory_alt5: itemcmds.inventory_print,
+    ewcfg.cmd_inventory_alt6: itemcmds.inventory_print,
+    ewcfg.cmd_inventory_alt7: itemcmds.inventory_print,
     ewcfg.cmd_communitychest: itemcmds.inventory_print,
 
     # !inspect
