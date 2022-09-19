@@ -1,6 +1,7 @@
 import asyncio
 import random
 import time
+import math
 
 from ew.backend import core as bknd_core
 from ew.backend import item as bknd_item
@@ -407,6 +408,22 @@ async def piss(cmd):
                     return await fe_utils.send_message(cmd.client, cmd.message.channel, fe_utils.formatMessage(cmd.message.author, response))
 
                 response = "You piss HARD and FAST right onto {}!!".format(target_member.display_name)
+           
+            elif ewcfg.mutation_id_quantumlegs in mutations:
+                    time_now = int(time.time())
+                    mutation_data = EwMutation(id_user=user_data.id_user, id_server=user_data.id_server, id_mutation=ewcfg.mutation_id_quantumlegs)
+                    if len(mutation_data.data) > 0:
+                        time_lastuse = int(mutation_data.data)
+                    else:
+                        time_lastuse = 0
+
+                    if time_lastuse + 60 * 60 > time_now:
+                        response = "You can't do that again yet. Try again in about {} minute(s)".format(math.ceil((time_lastuse + 60 * 60 - time_now) / 60))
+                        return await fe_utils.send_response(response, cmd)
+                    
+                    mutation_data.data = str(time_now)
+                    mutation_data.persist()
+                    response = "You rev up your quantum cock and piss HARD and FAST right onto {}!!".format(target_member.display_name)
             else:
                 response = "You can't !piss on someone who isn't there! Moron!"
 
