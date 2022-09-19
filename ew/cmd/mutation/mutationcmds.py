@@ -423,6 +423,11 @@ async def piss(cmd):
                     
                     mutation_data.data = str(time_now)
                     mutation_data.persist()
+                    response = "The space directly above {}'s head prolapses into a shower of piss. Slurp's up!".format(target_member.display_name)
+                    resp_cont = EwResponseContainer(id_server=cmd.guild.id)
+                    resp_cont.add_member_to_update(target_member)
+                    resp_cont.add_channel_response(poi_static.id_to_poi.get(target_user_data.poi).channel, response)
+                    await resp_cont.post()
                     response = "You rev up your quantum cock and piss HARD and FAST right onto {}!!".format(target_member.display_name)
             else:
                 response = "You can't !piss on someone who isn't there! Moron!"
