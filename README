@@ -1,4 +1,4 @@
 Create a file in the same directory as client.py named "token", which
 contains only your API token.
 
-Run client.py (with python 3.5+).
+Run client.py (with python 3.9+).
