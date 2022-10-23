@@ -30,7 +30,7 @@ food_list = [
     ),
     EwFood(
         id_food = "slimekashot",
-        alias = ['shot', 'slimeka'],
+        alias = ['shot', 'sliameka'],
         recover_hunger = 9,
         price = 100,
         str_name = "shot of slimeka",
